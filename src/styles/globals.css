@@ -4,8 +4,33 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-200;
+    @apply bg-[#0d0f10] text-gray-100;
     @apply transition-colors duration-200;
+  }
+
+  /* ChatGPT-like colors */
+  .bg-chatgpt-gray {
+    @apply bg-[#202123];
+  }
+
+  .bg-chatgpt-darkgray {
+    @apply bg-[#0d0f10];
+  }
+
+  .bg-chatgpt-sidebar {
+    @apply bg-[#202123];
+  }
+
+  .bg-chatgpt-component {
+    @apply bg-[#0d0f10];
+  }
+
+  .border-chatgpt {
+    @apply border-[#444654];
+  }
+
+  .text-chatgpt {
+    @apply text-[#ececf1];
   }
 }
 
@@ -15,19 +40,24 @@
   }
 
   /* Dark mode scrollbar styles */
-  .dark ::-webkit-scrollbar {
+  ::-webkit-scrollbar {
     @apply w-2 h-2;
   }
 
-  .dark ::-webkit-scrollbar-track {
-    @apply bg-gray-800;
+  ::-webkit-scrollbar-track {
+    @apply bg-[#202123];
   }
 
-  .dark ::-webkit-scrollbar-thumb {
+  ::-webkit-scrollbar-thumb {
     @apply bg-gray-600 rounded;
   }
 
-  .dark ::-webkit-scrollbar-thumb:hover {
+  ::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-500;
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply bg-[#10a37f] hover:bg-[#0e9170] text-white px-4 py-2 rounded-md transition-colors;
   }
 }

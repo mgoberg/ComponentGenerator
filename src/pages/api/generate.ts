@@ -1,6 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
 
+// Define the structure of Claude API content items
+interface ContentItem {
+  type: string;
+  text: string;
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -38,7 +44,7 @@ export default async function handler(
     const response = await axios.post(
       "https://api.anthropic.com/v1/messages",
       {
-        model: "claude-3-5-sonnet-20240620", // Using Claude 3.5 Sonnet, update to 3.7 when available
+        model: "claude-3-5-sonnet-20240620", // Switching back to 3.5 which was working
         max_tokens: 4000,
         messages: [
           {
@@ -83,21 +89,68 @@ ${prompt}`,
       }
     );
 
-    // Extract content from Claude's response
-    const fullResponse = response.data.content[0].text;
+    // Extract content from Claude's response - handle both string and object formats
+    let fullResponse = "";
+
+    try {
+      // Handle response structure based on Claude API version
+      if (response.data && response.data.content) {
+        // Handle array of content blocks (Claude 3.7 format)
+        if (Array.isArray(response.data.content)) {
+          fullResponse = response.data.content
+            .filter((item: ContentItem) => item.type === "text")
+            .map((item: ContentItem) => item.text)
+            .join("\n");
+        }
+        // Handle single content object
+        else if (
+          typeof response.data.content === "object" &&
+          response.data.content.text
+        ) {
+          fullResponse = response.data.content.text;
+        }
+        // Handle direct text content (Claude 3.5 format)
+        else if (typeof response.data.content === "string") {
+          fullResponse = response.data.content;
+        }
+      }
+    } catch (err) {
+      console.error("Error parsing Claude response:", err);
+      fullResponse = JSON.stringify(response.data);
+    }
 
     // Extract code and implementation guide using regex
     const codeMatch = fullResponse.match(
-      /COMPONENT_CODE:([\s\S]*?)(?=IMPLEMENTATION_GUIDE:|$)/
-    );
-    const implementationMatch = fullResponse.match(
-      /IMPLEMENTATION_GUIDE:([\s\S]*)/
+      /COMPONENT_CODE:(?:\s*)([\s\S]*?)(?=IMPLEMENTATION_GUIDE:|$)/i
     );
 
-    let generatedCode = codeMatch ? codeMatch[1].trim() : fullResponse;
-    let implementationGuide = implementationMatch
-      ? implementationMatch[1].trim()
-      : "";
+    const implementationMatch = fullResponse.match(
+      /IMPLEMENTATION_GUIDE:(?:\s*)([\s\S]*)/i
+    );
+
+    let generatedCode = "";
+    let implementationGuide = "";
+
+    if (codeMatch && codeMatch[1]) {
+      generatedCode = codeMatch[1].trim();
+    } else {
+      // If we can't extract the code using regex, use a fallback approach
+      const parts = fullResponse.split(/IMPLEMENTATION_GUIDE:/i);
+      if (parts.length > 0) {
+        generatedCode = parts[0].replace(/COMPONENT_CODE:/i, "").trim();
+      } else {
+        generatedCode = fullResponse;
+      }
+    }
+
+    if (implementationMatch && implementationMatch[1]) {
+      implementationGuide = implementationMatch[1].trim();
+    } else {
+      const parts = fullResponse.split(/IMPLEMENTATION_GUIDE:/i);
+      if (parts.length > 1) {
+        implementationGuide = parts[1].trim();
+      }
+    }
 
     // Clean up potential markdown code blocks
     generatedCode = generatedCode
@@ -108,6 +161,17 @@ ${prompt}`,
     generatedCode = generatedCode
       .replace(/import\s+.*?;?\n/g, "")
       .replace(/export\s+default\s+/g, "");
+
+    // If the code still contains markdown formatting or is just the word "object"
+    if (
+      generatedCode === "object" ||
+      (!generatedCode.includes("function") && !generatedCode.includes("=>"))
+    ) {
+      return res.status(500).json({
+        error:
+          "Failed to parse the generated component code. Please try again.",
+      });
+    }
 
     return res.status(200).json({
       code: generatedCode,

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useTheme } from "@/context/ThemeContext";
 
 interface PreviewPaneProps {
   code: string;
@@ -7,7 +6,6 @@ interface PreviewPaneProps {
 
 export default function PreviewPane({ code }: PreviewPaneProps) {
   const [iframeKey, setIframeKey] = useState(0);
-  const { theme } = useTheme();
   const [processedCode, setProcessedCode] = useState("");
 
   // Process the code to remove markdown formatting and separate CSS
@@ -44,6 +42,8 @@ export default function PreviewPane({ code }: PreviewPaneProps) {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <!-- Content Security Policy for images -->
+      <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src * data: blob: https:; style-src 'self' 'unsafe-inline';">
       <style>
         /* Base styles */
         body {
@@ -51,10 +51,8 @@ export default function PreviewPane({ code }: PreviewPaneProps) {
                        'Open Sans', 'Helvetica Neue', sans-serif;
           margin: 0;
           padding: 16px;
-          ${
-            theme === "dark" ? "background-color: #1a202c; color: #e2e8f0;" : ""
-          }
-          transition: background-color 0.3s, color 0.3s;
+          background-color: #0d0f10; 
+          color: #ececf1;
         }
         
         /* Default responsive styles */
@@ -78,13 +76,15 @@ export default function PreviewPane({ code }: PreviewPaneProps) {
   `;
 
   return (
-    <div className="border dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 overflow-hidden h-80 shadow-md">
+    <div className="border border-[#444654] rounded-md bg-[#0d0f10] overflow-hidden h-80 shadow-md">
       <iframe
         key={iframeKey}
         srcDoc={iframeContent}
         title="Preview"
         className="w-full h-full"
-        sandbox="allow-same-origin allow-scripts"
+        sandbox="allow-same-origin allow-scripts allow-downloads"
+        referrerPolicy="no-referrer"
+        loading="lazy"
         onError={() => console.error("iframe loading error")}
       />
     </div>

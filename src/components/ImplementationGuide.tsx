@@ -15,8 +15,8 @@ export default function ImplementationGuide({
 
   if (!guide) {
     return (
-      <div className="p-4 border dark:border-gray-700 rounded-md bg-gray-100 dark:bg-gray-800">
-        <p className="text-gray-500 dark:text-gray-400 italic">
+      <div className="p-4 border border-[#444654] rounded-md bg-[#2d2d33]">
+        <p className="text-gray-400 italic">
           Generate code to see implementation instructions.
         </p>
       </div>
@@ -34,7 +34,7 @@ export default function ImplementationGuide({
     // Replace code snippets with styled code
     processed = processed.replace(
       /`([^`]+)`/g,
-      "<code class='bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm'>$1</code>"
+      "<code class='bg-[#2d2d33] px-1 py-0.5 rounded text-sm'>$1</code>"
     );
 
     // Convert line breaks to paragraphs
@@ -51,17 +51,17 @@ export default function ImplementationGuide({
   };
 
   return (
-    <div className="p-4 border dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 overflow-auto shadow-md max-h-96">
+    <div className="p-4 border border-[#444654] rounded-md bg-[#2d2d33] overflow-auto shadow-md max-h-96">
       {imports.length > 0 && (
-        <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
+        <div className="mb-4 p-3 bg-[#1a1a1d] rounded-md">
           <h3 className="font-bold text-sm mb-2">Required Imports:</h3>
-          <pre className="text-xs overflow-auto p-2 bg-gray-200 dark:bg-gray-800 rounded">
+          <pre className="text-xs overflow-auto p-2 bg-[#0d0f10] rounded">
             {imports.join("\n")}
           </pre>
         </div>
       )}
       <div
-        className="prose dark:prose-invert max-w-none"
+        className="prose prose-invert max-w-none"
         dangerouslySetInnerHTML={{ __html: processGuide(guide) }}
       />
     </div>

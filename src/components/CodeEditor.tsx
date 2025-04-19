@@ -62,7 +62,7 @@ export default function CodeEditor({ code, onChange }: CodeEditorProps) {
   }, [code]);
 
   return (
-    <div className="relative border dark:border-gray-700 rounded-md bg-gray-900 text-white overflow-hidden h-80 shadow-md">
+    <div className="relative border border-[#444654] rounded-md bg-[#0d0f10] text-white overflow-hidden h-80 shadow-md">
       <textarea
         ref={textareaRef}
         value={code}
@@ -71,7 +71,7 @@ export default function CodeEditor({ code, onChange }: CodeEditorProps) {
         onKeyDown={handleKeyDown}
         className="absolute top-0 left-0 w-full h-full p-4 font-mono text-transparent bg-transparent caret-white z-10 resize-none overflow-auto"
         spellCheck="false"
-        style={{ caretColor: "#CBD5E0" }} // Visible cursor color
+        style={{ caretColor: "#CBD5E0" }}
       />
       <pre
         ref={preRef}
@@ -79,7 +79,7 @@ export default function CodeEditor({ code, onChange }: CodeEditorProps) {
       >
         <code className="language-tsx">{code || " "}</code>
       </pre>
-      <div className="absolute bottom-0 right-0 p-2 text-xs text-gray-400 bg-gray-800 rounded-tl-md">
+      <div className="absolute bottom-0 right-0 p-2 text-xs text-gray-400 bg-[#202123] rounded-tl-md">
         React TSX
       </div>
     </div>

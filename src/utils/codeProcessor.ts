@@ -13,6 +13,9 @@ export function processGeneratedCode(rawCode: string): string {
   // Handle any trailing spaces or unnecessary line breaks
   cleanCode = cleanCode.trim();
 
+  // Fix common undefined .map() errors by adding safety checks
+  cleanCode = cleanCode.replace(/(\w+)\.map\(/g, "($1 || []).map(");
+
   return cleanCode;
 }
 
@@ -58,37 +61,24 @@ export function extractJavaScript(code: string): string {
  * Extracts component name from React component code
  */
 export function extractComponentName(code: string): string {
-  if (!code) return "Component";
-
-  // Try to match various component definition patterns
-  // Function declarations: function MyComponent() { ... }
-  const functionMatch = code.match(/function\s+([A-Z]\w+)\s*\(/);
-  if (functionMatch && functionMatch[1]) {
-    return functionMatch[1];
-  }
-
-  // Arrow function constants: const MyComponent = () => { ... }
-  const constArrowMatch = code.match(/const\s+([A-Z]\w+)\s*=\s*\([^)]*\)\s*=>/);
-  if (constArrowMatch && constArrowMatch[1]) {
-    return constArrowMatch[1];
-  }
-
-  // Standard constants: const MyComponent = function() { ... }
-  const constFunctionMatch = code.match(/const\s+([A-Z]\w+)\s*=\s*function/);
-  if (constFunctionMatch && constFunctionMatch[1]) {
-    return constFunctionMatch[1];
-  }
-
-  // React.memo, forwardRef: const MyComponent = React.memo(...)
-  const memoMatch = code.match(
-    /const\s+([A-Z]\w+)\s*=\s*React\.(memo|forwardRef)/
-  );
-  if (memoMatch && memoMatch[1]) {
-    return memoMatch[1];
-  }
-
   // Default component name
-  return "Component";
+  let componentName = "CustomComponent";
+
+  // Try to find export default function ComponentName or const ComponentName =
+  const functionComponentRegex = /export\s+default\s+function\s+(\w+)/;
+  const constComponentRegex =
+    /const\s+(\w+)\s*=\s*(?:\(\s*(\{.*?\})\s*\)\s*=>|React\.memo|React\.forwardRef)/;
+
+  const functionMatch = code.match(functionComponentRegex);
+  const constMatch = code.match(constComponentRegex);
+
+  if (functionMatch && functionMatch[1]) {
+    componentName = functionMatch[1];
+  } else if (constMatch && constMatch[1]) {
+    componentName = constMatch[1];
+  }
+
+  return componentName;
 }
 
 /**
@@ -97,6 +87,6 @@ export function extractComponentName(code: string): string {
 export function extractImports(code: string): string[] {
   if (!code) return [];
 
-  const importRegex = /import\s+.*from\s+['"].*['"]/g;
-  return Array.from(code.match(importRegex) || []);
+  const importRegex = /import\s+.*?from\s+['"].*?['"]\s*;?/g;
+  return code.match(importRegex) || [];
 }

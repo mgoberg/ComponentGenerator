@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useTheme } from "@/context/ThemeContext";
 import { extractComponentName } from "@/utils/codeProcessor";
 
 interface ReactPreviewPaneProps {
@@ -8,7 +7,6 @@ interface ReactPreviewPaneProps {
 
 export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
   const [iframeKey, setIframeKey] = useState(0);
-  const { theme } = useTheme();
   const [processedCode, setProcessedCode] = useState("");
   const [extractedCss, setExtractedCss] = useState("");
   const [componentName, setComponentName] = useState("CustomComponent");
@@ -65,7 +63,7 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
   // If no code yet, show a placeholder
   if (!processedCode) {
     return (
-      <div className="border dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 overflow-hidden h-80 shadow-md flex items-center justify-center text-gray-500 dark:text-gray-400 text-center p-4">
+      <div className="border border-[#444654] rounded-md bg-[#0d0f10] overflow-hidden h-80 shadow-md flex items-center justify-center text-gray-400 text-center p-4">
         Generate a component to see a preview
       </div>
     );
@@ -80,6 +78,9 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>React UI Component Preview</title>
       
+      <!-- Content Security Policy for images -->
+      <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src * data: blob: https: http:; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.tailwindcss.com;">
+      
       <!-- Load React from CDN -->
       <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
       <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -93,10 +94,27 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
           font-family: system-ui, -apple-system, sans-serif;
           margin: 0;
           padding: 16px;
-          ${theme === "dark" ? "background-color:#1a202c;color:#e2e8f0;" : ""}
-          transition: background-color 0.3s, color 0.3s;
+          background-color: #0d0f10;
+          color: #ececf1;
           min-height: 100vh;
           position: relative;
+        }
+        
+        /* Image handling */
+        img {
+          max-width: 100%;
+          height: auto;
+          display: block;
+        }
+        
+        .image-fallback {
+          background: #202123;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 150px;
+          color: #9ca3af;
+          border: 1px dashed #444654;
         }
         
         /* Modal-specific styles */
@@ -106,7 +124,7 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
           left: 0;
           right: 0;
           bottom: 0;
-          background-color: rgba(0, 0, 0, 0.5);
+          background-color: rgba(0, 0, 0, 0.7);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -119,16 +137,18 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
           width: 100%;
           padding: 10px;
           margin: 10px 0;
-          border: 1px solid #ccc;
+          border: 1px solid #444654;
           border-radius: 4px;
           font-size: 16px;
+          background-color: #2d2d33;
+          color: #ececf1;
         }
         
         /* Button styling */
         button {
           padding: 10px 15px;
           margin: 10px 5px;
-          background-color: #4a90e2;
+          background-color: #10a37f;
           color: white;
           border: none;
           border-radius: 4px;
@@ -137,23 +157,17 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
         }
         
         button:hover {
-          background-color: #357ae8;
+          background-color: #0e9170;
         }
         
         /* Social login button */
         .social-button {
-          background-color: #ffffff;
-          border: 1px solid #ddd;
-          color: #333;
+          background-color: #2d2d33;
+          border: 1px solid #444654;
+          color: #ececf1;
           display: flex;
           align-items: center;
           justify-content: center;
-        }
-        
-        .social-button img {
-          width: 20px;
-          height: 20px;
-          margin-right: 10px;
         }
         
         /* Extracted CSS from component */
@@ -187,24 +201,9 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
         }
         
         @keyframes glow {
-          0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
-          50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.8), 0 0 30px rgba(0, 255, 0, 0.5); }
-          100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
-        }
-        
-        @keyframes neonPulse {
-          0% { 
-            box-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3);
-            border-color: rgba(0, 255, 255, 0.7);
-          }
-          50% { 
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.8), 0 0 30px rgba(0, 255, 255, 0.5); 
-            border-color: rgba(0, 255, 255, 1);
-          }
-          100% { 
-            box-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3);
-            border-color: rgba(0, 255, 255, 0.7);
-          }
+          0% { box-shadow: 0 0 5px rgba(16, 163, 127, 0.5), 0 0 10px rgba(16, 163, 127, 0.3); }
+          50% { box-shadow: 0 0 20px rgba(16, 163, 127, 0.8), 0 0 30px rgba(16, 163, 127, 0.5); }
+          100% { box-shadow: 0 0 5px rgba(16, 163, 127, 0.5), 0 0 10px rgba(16, 163, 127, 0.3); }
         }
       </style>
     </head>
@@ -229,6 +228,57 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
           useLayoutEffect
         } = React;
         
+        // Helper function to prevent "map of undefined" errors
+        const safeArray = (arr) => Array.isArray(arr) ? arr : [];
+        
+        // Common data structures often used in components
+        const EMPTY_ARRAY = [];
+        const EMPTY_OBJECT = {};
+        const DEFAULT_ITEMS = [
+          { id: 1, title: 'Item 1', content: 'Content 1', image: 'https://via.placeholder.com/150' },
+          { id: 2, title: 'Item 2', content: 'Content 2', image: 'https://via.placeholder.com/150' },
+          { id: 3, title: 'Item 3', content: 'Content 3', image: 'https://via.placeholder.com/150' }
+        ];
+        
+        // Image component with fallback
+        const SafeImage = ({ src, alt, className, width, height, ...props }) => {
+          const [error, setError] = React.useState(false);
+          const fallbackSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2VlZSIgLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjYWFhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+SW1hZ2UgTm90IEZvdW5kPC90ZXh0Pjwvc3ZnPg==';
+          
+          if (error) {
+            return (
+              <div className={\`image-fallback \${className || ''}\`} style={{ width: width || '150px', height: height || '150px' }}>
+                <img src={fallbackSrc} alt={alt || 'Image not available'} {...props} />
+              </div>
+            );
+          }
+          
+          return (
+            <img 
+              src={src} 
+              alt={alt || 'Component preview image'} 
+              className={className} 
+              width={width}
+              height={height}
+              onError={() => setError(true)}
+              {...props}
+            />
+          );
+        };
+        
+        // Make SafeImage available globally
+        window.SafeImage = SafeImage;
+        
+        // Patch Array.prototype.map to handle undefined
+        const originalMap = Array.prototype.map;
+        Array.prototype.map = function(...args) {
+          if (this === undefined || this === null) {
+            console.warn('Attempted to call map on undefined or null');
+            return EMPTY_ARRAY;
+          }
+          return originalMap.apply(this, args);
+        };
+        
         // Wrap in a try-catch to show errors in the UI
         try {
           ${processedCode}
@@ -250,9 +300,57 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
               defaultProps = ${componentName}.defaultProps;
             }
             
+            // Common props that might be needed by components
+            defaultProps = {
+              items: DEFAULT_ITEMS,
+              data: DEFAULT_ITEMS,
+              images: [
+                'https://via.placeholder.com/150',
+                'https://via.placeholder.com/300',
+                'https://via.placeholder.com/200'
+              ],
+              image: 'https://via.placeholder.com/400',
+              src: 'https://via.placeholder.com/400',
+              avatar: 'https://via.placeholder.com/100',
+              ...defaultProps
+            };
+            
+            // Process the component code to replace img tags with SafeImage
+            const ComponentWithSafeImages = (props) => {
+              const renderWithSafeImages = (children) => {
+                if (!children) return children;
+                
+                if (Array.isArray(children)) {
+                  return children.map(renderWithSafeImages);
+                }
+                
+                if (typeof children === 'object' && children.type === 'img') {
+                  return <SafeImage {...children.props} />;
+                }
+                
+                if (children.props && children.props.children) {
+                  return React.cloneElement(
+                    children,
+                    { ...children.props },
+                    renderWithSafeImages(children.props.children)
+                  );
+                }
+                
+                return children;
+              };
+              
+              try {
+                const component = <${componentName} {...props} />;
+                return component;
+              } catch (error) {
+                console.error("Error rendering with safe images:", error);
+                return <${componentName} {...props} />;
+              }
+            };
+            
             ReactDOM.render(
               <div className="p-4">
-                <${componentName} {...defaultProps} />
+                <ComponentWithSafeImages {...defaultProps} />
               </div>,
               document.getElementById('root')
             );
@@ -262,6 +360,7 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
               typeof window[key] === 'function' && 
               key !== 'React' && 
               key !== 'ReactDOM' &&
+              key !== 'SafeImage' &&
               key.charAt(0) === key.charAt(0).toUpperCase()
             );
             
@@ -280,8 +379,15 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
             }
           }
         } catch (error) {
+          let errorMessage = error.message;
+          
+          // Special handling for common errors
+          if (errorMessage.includes("Cannot read properties of undefined (reading 'map')")) {
+            errorMessage = "Error: Attempted to call .map() on an undefined variable. Check your data initialization.";
+          }
+          
           document.getElementById('error').style.display = 'block';
-          document.getElementById('error').innerHTML = 'Error rendering component: ' + error.message;
+          document.getElementById('error').innerHTML = 'Error rendering component: ' + errorMessage;
           console.error('Component error:', error);
         }
       </script>
@@ -290,13 +396,15 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
   `;
 
   return (
-    <div className="border dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 overflow-hidden h-80 shadow-md">
+    <div className="border border-[#444654] rounded-md bg-[#0d0f10] overflow-hidden h-80 shadow-md">
       <iframe
         key={iframeKey}
         srcDoc={sandboxContent}
         title="React Component Preview"
         className="w-full h-full"
-        sandbox="allow-scripts allow-modals"
+        sandbox="allow-scripts allow-same-origin allow-downloads allow-modals"
+        referrerPolicy="no-referrer"
+        loading="lazy"
         onError={(e) => console.error("iframe loading error", e)}
       />
     </div>
