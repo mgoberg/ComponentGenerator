@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-200;
+    @apply transition-colors duration-200;
+  }
+}
+
+@layer components {
+  .code-editor {
+    @apply font-mono text-sm;
+  }
+
+  /* Dark mode scrollbar styles */
+  .dark ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-gray-800;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-gray-600 rounded;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+}
