@@ -1,5 +1,63 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Component, ErrorInfo } from "react";
 import { extractComponentName } from "@/utils/codeProcessor";
+
+// Simple error boundary to catch rendering errors
+class ErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean; errorMessage: string }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, errorMessage: "" };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, errorMessage: error.message };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("Preview error:", error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+          <div className="text-amber-500 mb-2">⚠️</div>
+          <h3 className="text-amber-500 font-medium mb-1">Preview Error</h3>
+          <p className="text-gray-400 text-sm">{this.state.errorMessage}</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// In-app loading spinner component
+function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center h-full w-full">
+      <div className="relative flex flex-col items-center">
+        <div className="w-16 h-16 relative">
+          {/* Outer circle */}
+          <div className="absolute inset-0 border-4 border-gray-700 rounded-full"></div>
+
+          {/* Spinner arc */}
+          <div
+            className="absolute inset-0 border-4 border-transparent border-t-[#10a37f] rounded-full animate-spin"
+            style={{ animationDuration: "1s" }}
+          ></div>
+
+          {/* Inner highlight circle */}
+          <div className="absolute inset-2 border-2 border-gray-800 rounded-full"></div>
+        </div>
+        <p className="mt-4 text-gray-400 text-sm animate-pulse">
+          Loading component...
+        </p>
+      </div>
+    </div>
+  );
+}
 
 interface ReactPreviewPaneProps {
   code: string;
@@ -8,387 +66,384 @@ interface ReactPreviewPaneProps {
 export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
   const [iframeKey, setIframeKey] = useState(0);
   const [processedCode, setProcessedCode] = useState("");
-  const [extractedCss, setExtractedCss] = useState("");
-  const [componentName, setComponentName] = useState("CustomComponent");
+  const [componentName, setComponentName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Process the React component code
+  // Process code only when it changes
   useEffect(() => {
     if (!code) {
       setProcessedCode("");
-      setExtractedCss("");
       return;
     }
 
-    // Clean up code (remove markdown formatting if any)
+    setIsLoading(true);
+
+    // Clean up code and extract component name
     let cleanCode = code
       .replace(/```(tsx|jsx|typescript|javascript|react|js)?\n/g, "")
       .replace(/```\s*$/g, "");
 
+    // Pre-process the code to fix common issues
+    cleanCode = fixCommonIssues(cleanCode);
+
     // Extract component name
-    const extractedName = extractComponentName(cleanCode);
-    setComponentName(extractedName);
-
-    // Extract CSS from comments
-    let css = "";
-
-    // Look for CSS in comments (/* ... */ or // CSS: ...)
-    const cssCommentRegex = /\/\*\s*([\s\S]*?)\s*\*\//g;
-    const cssLineCommentRegex = /\/\/\s*CSS:\s*(.*)/g;
-
-    let match;
-    while ((match = cssCommentRegex.exec(cleanCode)) !== null) {
-      css += match[1] + "\n";
+    let extractedName = extractComponentName(cleanCode);
+    if (!extractedName) {
+      const arrowMatch = cleanCode.match(/const\s+(\w+)\s*=\s*\(?/);
+      if (arrowMatch && arrowMatch[1]) {
+        extractedName = arrowMatch[1];
+      }
     }
 
-    while ((match = cssLineCommentRegex.exec(cleanCode)) !== null) {
-      css += match[1] + "\n";
-    }
-
-    // Remove the CSS comments from the code to avoid duplication
-    cleanCode = cleanCode
-      .replace(cssCommentRegex, "")
-      .replace(cssLineCommentRegex, "");
-
+    setComponentName(extractedName || "Component");
     setProcessedCode(cleanCode);
-    setExtractedCss(css);
+    setIsLoading(false);
   }, [code]);
 
+  // Fix common issues in the code
+  const fixCommonIssues = (code: string) => {
+    if (!code) return "";
+
+    let fixedCode = code;
+
+    // Add missing keyframes definition if used
+    if (
+      (fixedCode.includes("keyframes") &&
+        !fixedCode.includes("const keyframes =")) ||
+      (fixedCode.includes("keyframes`") &&
+        !fixedCode.includes("styled-components"))
+    ) {
+      fixedCode = `// Add missing keyframes function
+const keyframes = (strings, ...values) => {
+  if (typeof strings === 'string') return strings;
+  return strings.reduce((acc, str, i) => {
+    return acc + str + (values[i] || '');
+  }, '');
+};
+
+${fixedCode}`;
+    }
+
+    // Fix specific animation issues seen in the errors
+    if (fixedCode.includes("const spin = keyframes")) {
+      fixedCode = fixedCode.replace(
+        /const spin = keyframes`([^`]+)`/g,
+        "const spin = `@keyframes spin { $1 }`"
+      );
+
+      // Also update animation references
+      fixedCode = fixedCode.replace(/animation: \${spin}/g, "animation: spin");
+    }
+
+    return fixedCode;
+  };
+
   useEffect(() => {
-    // Update the iframe key to reset the iframe when code changes
     if (processedCode) {
       setIframeKey((prev) => prev + 1);
     }
-  }, [processedCode, extractedCss]);
+  }, [processedCode]);
 
-  // If no code yet, show a placeholder
-  if (!processedCode) {
+  if (!code) {
     return (
-      <div className="border border-[#444654] rounded-md bg-[#0d0f10] overflow-hidden h-80 shadow-md flex items-center justify-center text-gray-400 text-center p-4">
-        Generate a component to see a preview
+      <div className="border border-[#444654] rounded-md bg-[#0d0f10] overflow-hidden h-80 shadow-md flex flex-col items-center justify-center text-gray-400 text-center p-4">
+        <div className="w-16 h-16 mb-4 text-[#10a37f]">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1}
+              d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"
+            />
+          </svg>
+        </div>
+        <p className="text-gray-500">Generate a component to see a preview</p>
+        <p className="text-gray-600 text-xs mt-2">
+          Interactive preview will appear here
+        </p>
       </div>
     );
   }
 
-  // Create a sandbox content with React and ReactDOM loaded from CDN
+  if (!processedCode || isLoading) {
+    return (
+      <div className="border border-[#444654] rounded-md bg-[#0d0f10] overflow-hidden h-80 shadow-md">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   const sandboxContent = `
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>React UI Component Preview</title>
-      
-      <!-- Content Security Policy for images -->
-      <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src * data: blob: https: http:; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.tailwindcss.com;">
-      
-      <!-- Load React from CDN -->
+      <title>Component Preview</title>
       <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
       <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-      <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-      
-      <!-- Load Tailwind CSS for styling -->
-      <script src="https://cdn.tailwindcss.com"></script>
-      
       <style>
-        body {
-          font-family: system-ui, -apple-system, sans-serif;
+        html, body {
           margin: 0;
-          padding: 16px;
+          padding: 0;
+          height: 100%;
+          width: 100%;
+          overflow: hidden;
           background-color: #0d0f10;
           color: #ececf1;
-          min-height: 100vh;
-          position: relative;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
         }
         
-        /* Image handling */
-        img {
-          max-width: 100%;
-          height: auto;
-          display: block;
-        }
-        
-        .image-fallback {
-          background: #202123;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 150px;
-          color: #9ca3af;
-          border: 1px dashed #444654;
-        }
-        
-        /* Modal-specific styles */
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: rgba(0, 0, 0, 0.7);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-        
-        /* Input fields styling */
-        input {
-          display: block;
+        #root {
+          position: absolute;
           width: 100%;
-          padding: 10px;
-          margin: 10px 0;
-          border: 1px solid #444654;
-          border-radius: 4px;
-          font-size: 16px;
-          background-color: #2d2d33;
-          color: #ececf1;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+          box-sizing: border-box;
+          overflow: hidden;
         }
         
-        /* Button styling */
-        button {
-          padding: 10px 15px;
-          margin: 10px 5px;
-          background-color: #10a37f;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 16px;
-        }
-        
-        button:hover {
-          background-color: #0e9170;
-        }
-        
-        /* Social login button */
-        .social-button {
-          background-color: #2d2d33;
-          border: 1px solid #444654;
-          color: #ececf1;
+        .component-container {
+          max-width: 100%;
+          max-height: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         
-        /* Extracted CSS from component */
-        ${extractedCss}
-        
+        .error-message {
+          color: #ff4d4f;
+          background-color: rgba(255, 77, 79, 0.1);
+          border: 1px solid rgba(255, 77, 79, 0.3);
+          padding: 8px 12px;
+          border-radius: 4px;
+          margin: 8px 0;
+          text-align: center;
+          font-family: monospace;
+          max-width: 80%;
+        }
+
         /* Common animation keyframes */
-        @keyframes appear {
-          from { opacity: 0; transform: scale(0.5); }
-          to { opacity: 1; transform: scale(1); }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
-        
-        @keyframes fadeIn {
-          0% { opacity: 0; }
-          100% { opacity: 1; }
-        }
-        
-        @keyframes spinner {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
         }
         
         @keyframes pulse {
-          0% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.1); opacity: 0.8; }
-          100% { transform: scale(1); opacity: 1; }
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
-        
-        @keyframes slideIn {
-          0% { transform: translateY(20px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
-        }
-        
-        @keyframes glow {
-          0% { box-shadow: 0 0 5px rgba(16, 163, 127, 0.5), 0 0 10px rgba(16, 163, 127, 0.3); }
-          50% { box-shadow: 0 0 20px rgba(16, 163, 127, 0.8), 0 0 30px rgba(16, 163, 127, 0.5); }
-          100% { box-shadow: 0 0 5px rgba(16, 163, 127, 0.5), 0 0 10px rgba(16, 163, 127, 0.3); }
+
+        /* Enhanced spinner for initial loading */
+        .preview-spinner {
+          display: inline-block;
+          width: 50px;
+          height: 50px;
+          border: 3px solid rgba(16, 163, 127, 0.2);
+          border-radius: 50%;
+          border-top-color: #10a37f;
+          animation: spin 1s ease-in-out infinite;
         }
       </style>
+      <script>
+        // Define keyframes function for the component to use
+        function keyframes(strings, ...values) {
+          if (typeof strings === 'string') return strings;
+          const result = strings.reduce((acc, str, i) => {
+            return acc + str + (values[i] || '');
+          }, '');
+          return result;
+        }
+      </script>
+      <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     </head>
     <body>
-      <div class="preview-container">
-        <div class="responsive-container">
-          <div id="root"></div>
+      <div id="root">
+        <!-- Initial loading state -->
+        <div style="display: flex; height: 100%; width: 100%; align-items: center; justify-content: center; flex-direction: column;">
+          <div class="preview-spinner"></div>
+          <p style="margin-top: 1rem; color: #888; font-size: 14px;">Rendering component...</p>
         </div>
       </div>
-      <div id="error"></div>
-      
       <script type="text/babel">
         // Make React hooks available globally
-        const {
-          useState, 
-          useEffect, 
-          useRef, 
-          useContext, 
-          useReducer, 
-          useCallback, 
-          useMemo, 
-          useLayoutEffect
-        } = React;
+        const { useState, useEffect, useRef, useCallback, useMemo, useContext, useReducer } = React;
         
-        // Helper function to prevent "map of undefined" errors
-        const safeArray = (arr) => Array.isArray(arr) ? arr : [];
+        // Basic error handler
+        window.addEventListener('error', (e) => {
+          console.error('Preview error:', e.message);
+          document.getElementById('root').innerHTML = 
+            '<div class="error-message">Error: ' + e.message + '</div>';
+        });
         
-        // Common data structures often used in components
-        const EMPTY_ARRAY = [];
-        const EMPTY_OBJECT = {};
-        const DEFAULT_ITEMS = [
-          { id: 1, title: 'Item 1', content: 'Content 1', image: 'https://via.placeholder.com/150' },
-          { id: 2, title: 'Item 2', content: 'Content 2', image: 'https://via.placeholder.com/150' },
-          { id: 3, title: 'Item 3', content: 'Content 3', image: 'https://via.placeholder.com/150' }
-        ];
-        
-        // Image component with fallback
-        const SafeImage = ({ src, alt, className, width, height, ...props }) => {
-          const [error, setError] = React.useState(false);
-          const fallbackSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2VlZSIgLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjYWFhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+SW1hZ2UgTm90IEZvdW5kPC90ZXh0Pjwvc3ZnPg==';
-          
-          if (error) {
-            return (
-              <div className={\`image-fallback \${className || ''}\`} style={{ width: width || '150px', height: height || '150px' }}>
-                <img src={fallbackSrc} alt={alt || 'Image not available'} {...props} />
-              </div>
-            );
+        // Create emulated styled-components functionality
+        const styled = {
+          div: (styles) => (props) => {
+            const styleString = typeof styles === 'function' ? styles(props) : styles;
+            const className = 'styled-' + Math.random().toString(36).substr(2, 9);
+            
+            // Add the styles to the document
+            const styleElem = document.createElement('style');
+            styleElem.innerHTML = \`.\${className} { \${styleString} }\`;
+            document.head.appendChild(styleElem);
+            
+            return React.createElement('div', { className, ...props }, props.children);
+          },
+          // Add more HTML elements as needed
+          span: (styles) => (props) => {
+            // Similar implementation for span
+            const styleString = typeof styles === 'function' ? styles(props) : styles;
+            const className = 'styled-' + Math.random().toString(36).substr(2, 9);
+            const styleElem = document.createElement('style');
+            styleElem.innerHTML = \`.\${className} { \${styleString} }\`;
+            document.head.appendChild(styleElem);
+            return React.createElement('span', { className, ...props }, props.children);
           }
-          
-          return (
-            <img 
-              src={src} 
-              alt={alt || 'Component preview image'} 
-              className={className} 
-              width={width}
-              height={height}
-              onError={() => setError(true)}
-              {...props}
-            />
-          );
         };
         
-        // Make SafeImage available globally
-        window.SafeImage = SafeImage;
+        // For each HTML element, create a styled version
+        ['button', 'input', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'img', 'ul', 'li', 'section', 'article', 'main'].forEach(tag => {
+          styled[tag] = styled.div;
+        });
         
-        // Patch Array.prototype.map to handle undefined
-        const originalMap = Array.prototype.map;
-        Array.prototype.map = function(...args) {
-          if (this === undefined || this === null) {
-            console.warn('Attempted to call map on undefined or null');
-            return EMPTY_ARRAY;
-          }
-          return originalMap.apply(this, args);
+        // CSS helper for styled-components
+        const css = (strings, ...values) => {
+          return strings.reduce((acc, str, i) => {
+            return acc + str + (values[i] || '');
+          }, '');
         };
         
-        // Wrap in a try-catch to show errors in the UI
+        // Default mock data for components
+        const mockData = {
+          items: [
+            { id: 1, title: 'Item 1', description: 'Description 1', image: 'https://via.placeholder.com/150' },
+            { id: 2, title: 'Item 2', description: 'Description 2', image: 'https://via.placeholder.com/150' },
+          ],
+          users: [
+            { id: 1, name: 'User 1', avatar: 'https://via.placeholder.com/40' },
+            { id: 2, name: 'User 2', avatar: 'https://via.placeholder.com/40' },
+          ],
+          onClick: () => console.log('clicked'),
+          onChange: () => console.log('changed'),
+          onSubmit: () => console.log('submitted'),
+          children: 'Interactive Button',
+          label: 'Interactive Component',
+          text: 'Sample Content',
+          value: 'Sample Value',
+          title: 'Component Title',
+          subtitle: 'Component Subtitle',
+          description: 'This is a sample description for the component.',
+          size: 'medium',
+          variant: 'primary',
+          color: '#10a37f',
+          disabled: false,
+          active: true,
+          open: true,
+          loading: false,
+          error: false,
+          success: false,
+          progress: 75,
+          max: 100,
+          min: 0,
+          step: 1,
+          speed: 5, 
+          direction: 'right',
+        };
+        
         try {
+          // Add any global variables needed for the component
+          window.styled = styled;
+          window.css = css;
+          window.React = React;
+          
+          // Execute the component code
           ${processedCode}
           
-          // Check if the component exists and render it
-          if (typeof ${componentName} !== 'undefined') {
-            // For modal components, we need to provide special props
-            let defaultProps = {};
-            let isModalComponent = ${componentName}.toString().toLowerCase().includes('modal');
+          // Try to find the component to render
+          let componentToRender = window["${componentName}"];
+          
+          // If primary component not found, look for any React components
+          if (typeof componentToRender !== 'function') {
+            const components = Object.keys(window).filter(key => 
+              typeof window[key] === 'function' && 
+              /^[A-Z]/.test(key) && 
+              !['React', 'ReactDOM'].includes(key)
+            );
             
-            if (isModalComponent) {
-              defaultProps = {
-                isVisible: true,
-                onDismiss: () => console.log('Modal dismissed'),
-                onGoogleLogin: () => console.log('Google login clicked'),
-                ...${componentName}.defaultProps
-              };
-            } else if (${componentName}.defaultProps) {
-              defaultProps = ${componentName}.defaultProps;
+            if (components.length > 0) {
+              componentToRender = window[components[0]];
             }
+          }
+          
+          // Function to create an element with different props depending on component name
+          const createElementWithAppropriateProps = (Component) => {
+            // Check component name to provide more appropriate props
+            const name = Component.name.toLowerCase();
             
-            // Common props that might be needed by components
-            defaultProps = {
-              items: DEFAULT_ITEMS,
-              data: DEFAULT_ITEMS,
-              images: [
-                'https://via.placeholder.com/150',
-                'https://via.placeholder.com/300',
-                'https://via.placeholder.com/200'
-              ],
-              image: 'https://via.placeholder.com/400',
-              src: 'https://via.placeholder.com/400',
-              avatar: 'https://via.placeholder.com/100',
-              ...defaultProps
-            };
-            
-            // Process the component code to replace img tags with SafeImage
-            const ComponentWithSafeImages = (props) => {
-              const renderWithSafeImages = (children) => {
-                if (!children) return children;
-                
-                if (Array.isArray(children)) {
-                  return children.map(renderWithSafeImages);
-                }
-                
-                if (typeof children === 'object' && children.type === 'img') {
-                  return <SafeImage {...children.props} />;
-                }
-                
-                if (children.props && children.props.children) {
-                  return React.cloneElement(
-                    children,
-                    { ...children.props },
-                    renderWithSafeImages(children.props.children)
-                  );
-                }
-                
-                return children;
-              };
-              
-              try {
-                const component = <${componentName} {...props} />;
-                return component;
-              } catch (error) {
-                console.error("Error rendering with safe images:", error);
-                return <${componentName} {...props} />;
-              }
-            };
-            
-            ReactDOM.render(
-              <div className="p-4">
-                <ComponentWithSafeImages {...defaultProps} />
-              </div>,
-              document.getElementById('root')
+            if (name.includes('button')) {
+              return React.createElement(Component, {
+                onClick: () => console.log('Button clicked'),
+                variant: 'primary',
+                size: 'medium',
+                children: 'Interactive Button'
+              });
+            } 
+            else if (name.includes('toggle') || name.includes('switch')) {
+              return React.createElement(Component, {
+                isOn: true,
+                onChange: () => console.log('Toggle changed'),
+                label: 'Toggle Switch'
+              });
+            }
+            else if (name.includes('spinner') || name.includes('loader')) {
+              return React.createElement(Component, {
+                size: 48,
+                color: '#10a37f',
+                speed: 1
+              });
+            }
+            else if (name.includes('card')) {
+              return React.createElement(Component, {
+                title: 'Card Title',
+                description: 'This is a sample card with customized content for the preview.',
+                image: 'https://via.placeholder.com/300x150',
+                onClick: () => console.log('Card clicked')
+              });
+            }
+            else {
+              // Default props for other components
+              return React.createElement(Component, mockData);
+            }
+          };
+          
+          // Render the component
+          if (typeof componentToRender === 'function') {
+            ReactDOM.createRoot(document.getElementById('root')).render(
+              <div className="component-container">
+                {createElementWithAppropriateProps(componentToRender)}
+              </div>
             );
           } else {
-            // Look for other component names in the code
-            const possibleComponents = Object.keys(window).filter(key => 
-              typeof window[key] === 'function' && 
-              key !== 'React' && 
-              key !== 'ReactDOM' &&
-              key !== 'SafeImage' &&
-              key.charAt(0) === key.charAt(0).toUpperCase()
-            );
-            
-            if (possibleComponents.length > 0) {
-              // Try to render the first component found
-              ReactDOM.render(
-                <div className="p-4">
-                  {React.createElement(window[possibleComponents[0]])}
-                </div>,
-                document.getElementById('root')
-              );
-            } else {
-              document.getElementById('error').style.display = 'block';
-              document.getElementById('error').innerHTML = 
-                'Could not find a UI component to render. Make sure your component is properly defined as a function or const.';
-            }
+            document.getElementById('root').innerHTML = 
+              '<div class="error-message">No React component found in the code</div>';
           }
         } catch (error) {
-          let errorMessage = error.message;
-          
-          // Special handling for common errors
-          if (errorMessage.includes("Cannot read properties of undefined (reading 'map')")) {
-            errorMessage = "Error: Attempted to call .map() on an undefined variable. Check your data initialization.";
-          }
-          
-          document.getElementById('error').style.display = 'block';
-          document.getElementById('error').innerHTML = 'Error rendering component: ' + errorMessage;
-          console.error('Component error:', error);
+          console.error('Component evaluation error:', error);
+          document.getElementById('root').innerHTML = 
+            '<div class="error-message">Error: ' + error.message + '</div>';
         }
       </script>
     </body>
@@ -396,17 +451,18 @@ export default function ReactPreviewPane({ code }: ReactPreviewPaneProps) {
   `;
 
   return (
-    <div className="border border-[#444654] rounded-md bg-[#0d0f10] overflow-hidden h-80 shadow-md">
-      <iframe
-        key={iframeKey}
-        srcDoc={sandboxContent}
-        title="React Component Preview"
-        className="w-full h-full"
-        sandbox="allow-scripts allow-same-origin allow-downloads allow-modals"
-        referrerPolicy="no-referrer"
-        loading="lazy"
-        onError={(e) => console.error("iframe loading error", e)}
-      />
-    </div>
+    <ErrorBoundary>
+      <div className="border border-[#444654] rounded-md bg-[#0d0f10] overflow-hidden h-80 shadow-md relative">
+        <iframe
+          key={iframeKey}
+          srcDoc={sandboxContent}
+          title="React Component Preview"
+          className="w-full h-full"
+          sandbox="allow-scripts allow-same-origin"
+          referrerPolicy="no-referrer"
+          loading="lazy"
+        />
+      </div>
+    </ErrorBoundary>
   );
 }

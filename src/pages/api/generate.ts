@@ -26,19 +26,25 @@ export default async function handler(
     const isIteration = prompt.includes("Based on this component:");
 
     const systemPromptBase =
-      "1. COMPONENT_CODE: Generate a modern React UI component with these requirements:\n" +
-      "   - Create a visually appealing, accessible, and reusable UI component\n" +
-      "   - Use JSX (not TypeScript) for compatibility with the preview system\n" +
-      "   - Include appropriate props with default values for customization\n" +
-      "   - IMPORTANT: Access React hooks by destructuring from React at the top of your component, like: const { useState, useEffect } = React;\n" +
-      "   - For modals and popups, make sure to include styling for the overlay and container\n" +
-      "   - For animations and transitions, incorporate them directly in the component using these methods:\n" +
-      "     a) For simple animations, use inline style with the animation property\n" +
-      "     b) For keyframes, include them without comments (directly in the style object or as CSS in backticks)\n" +
-      "     c) Make sure all animations work in the preview by using standard CSS animations\n" +
-      "   - Define the component as a named function that can be accessed globally (no imports/exports)\n" +
-      "   - Make sure it's responsive and works well on all screen sizes\n" +
-      "   - When building modals, make sure the modal is visible by default in the preview\n";
+      "1. COMPONENT_CODE: Create a visually stunning React UI component with these specifications:\n" +
+      "   - Design the component with modern, elegant aesthetics (subtle gradients, soft shadows, rounded corners)\n" +
+      "   - Incorporate thoughtful animations and micro-interactions that enhance usability\n" +
+      "   - Use a cohesive color scheme with carefully selected complementary colors\n" +
+      "   - Balance whitespace effectively for a clean, professional appearance\n" +
+      "   - Ensure the component is fully accessible (ARIA attributes, keyboard navigation, sufficient contrast)\n" +
+      "   - Make the component responsive with fluid layouts that work across all screen sizes\n" +
+      "   - Include meaningful props with sensible defaults for easy customization\n" +
+      "   - Add smooth transitions between states (hover, active, focus, etc.)\n" +
+      "   - Incorporate subtle, delightful details that make the component feel polished\n\n" +
+      "   Technical requirements:\n" +
+      "   - Use pure JSX/JavaScript (no TypeScript) for preview compatibility\n" +
+      "   - Access React hooks with destructuring: const { useState, useEffect } = React;\n" +
+      "   - Define the component as a named function to make it globally accessible\n" +
+      "   - For animations: Use keyframes in template literals or inline styles\n" +
+      "   - For complex components: Handle edge cases and provide fallbacks\n" +
+      "   - Ensure clean event handling with proper cleanup in useEffect when needed\n" +
+      "   - Ensure all dynamic elements are properly initialized to prevent 'undefined' errors\n" +
+      "   - For modals and popups, make them visible by default in the preview\n";
 
     // Claude API request
     const response = await axios.post(
@@ -50,31 +56,32 @@ export default async function handler(
           {
             role: "user",
             content: isIteration
-              ? `You are a UI component expert who specializes in React. The user will provide an existing component and request specific changes or improvements. Respond with the updated component implementation and usage guide.
+              ? `You're an expert UI designer and React developer known for creating beautiful, visually stunning components with perfect animations and interactions. A user has provided an existing component and wants specific improvements. Please update it while maintaining or enhancing its visual appeal.
 
 Provide your response in two separate parts:
-1. COMPONENT_CODE: The updated React UI component with the requested changes.
-2. IMPLEMENTATION_GUIDE: Write a guide explaining the changes made and how to use this UI component.
+1. COMPONENT_CODE: The updated React UI component with the requested changes, making it more visually appealing and polished.
+2. IMPLEMENTATION_GUIDE: A clear guide explaining the changes and how to use this enhanced component.
 
-Follow the same format requirements as before, ensuring animations are properly implemented.
+Make sure animations are smooth, design is modern, and code is clean.
 
 ${prompt}`
-              : `You are a UI component expert who specializes in React. Provide your response in two separate parts:
+              : `You're an expert UI designer and React developer known for creating beautiful, visually stunning components with perfect animations and interactions. Create a component that will impress users with its polish and elegance.
 
 ${systemPromptBase}
-2. IMPLEMENTATION_GUIDE: Write a guide explaining how to use this UI component, including:
-   - All available props and their purpose
-   - How to integrate it into a React application
-   - Required imports for a real application
-   - Examples of different configurations or variants
-   - Any accessibility considerations
+2. IMPLEMENTATION_GUIDE: Write a helpful guide explaining how to use this component:
+   - Detail all available props and their purpose
+   - Explain how to integrate the component into a React application
+   - List required imports for a real-world implementation
+   - Provide examples of different configurations or variants
+   - Include accessibility considerations and best practices
+   - Highlight any special features or animations worth noting
 
-Format your response exactly like this:
+Structure your response exactly like this:
 COMPONENT_CODE:
-[Your React UI component code here]
+[Your beautiful React UI component code]
 
 IMPLEMENTATION_GUIDE:
-[Your implementation instructions here]
+[Your clear, well-organized implementation guide]
 
 ${prompt}`,
           },

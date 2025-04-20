@@ -5,7 +5,9 @@ import ReactPreviewPane from "@/components/ReactPreviewPane";
 import ImplementationGuide from "@/components/ImplementationGuide";
 import PromptHistory from "@/components/PromptHistory";
 import ComponentHistory from "@/components/ComponentHistory";
+import ImageUploader from "@/components/ImageUploader";
 import { extractComponentName } from "@/utils/codeProcessor";
+import { getDemoComponent } from "@/utils/demoComponents";
 
 // Define the structure for iteration history
 interface Iteration {
@@ -34,6 +36,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [iterationPrompt, setIterationPrompt] = useState("");
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [contextImage, setContextImage] = useState<string | null>(null);
+  const [demoMode, setDemoMode] = useState(false);
 
   // Store iteration history
   const [iterationHistory, setIterationHistory] = useState<Iteration[]>([]);
@@ -47,6 +51,13 @@ export default function Home() {
     null
   );
 
+  // Find the initial prompt from the iteration history
+  const getInitialPrompt = (): string => {
+    if (iterationHistory.length === 0) return "";
+    const initialIteration = iterationHistory.find((i) => i.isInitial);
+    return initialIteration ? initialIteration.prompt : "";
+  };
+
   // Handle first-time generation
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -55,20 +66,32 @@ export default function Home() {
     setError(null);
 
     try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt }),
-      });
+      let data;
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to generate code");
+      if (demoMode) {
+        // Get mock data from the demo components
+        data = getDemoComponent(prompt);
+        // Short artificial delay to simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      } else {
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt,
+            contextImage: contextImage, // Include the image data when sending the request
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to generate code");
+        }
+
+        data = await response.json();
       }
-
-      const data = await response.json();
 
       // Create a new iteration entry
       const newIteration: Iteration = {
@@ -122,22 +145,31 @@ export default function Home() {
     setError(null);
 
     try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: `Based on this component: \n\n${generatedCode}\n\nMake the following changes: ${iterationPrompt}`,
-        }),
-      });
+      let data;
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to generate code");
+      if (demoMode) {
+        // Get mock iteration data
+        data = getDemoComponent(iterationPrompt, generatedCode);
+        // Short artificial delay to simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      } else {
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt: `Based on this component: \n\n${generatedCode}\n\nMake the following changes: ${iterationPrompt}`,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to generate code");
+        }
+
+        data = await response.json();
       }
-
-      const data = await response.json();
 
       // Create a new iteration entry
       const newIteration: Iteration = {
@@ -334,6 +366,37 @@ export default function Home() {
             <h1 className="text-xl md:text-2xl font-bold">
               ✨ AI React UI Component Designer
             </h1>
+
+            {/* Demo Mode Toggle */}
+            <div className="flex items-center">
+              <label
+                htmlFor="demo-mode"
+                className="flex items-center cursor-pointer"
+              >
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    id="demo-mode"
+                    className="sr-only"
+                    checked={demoMode}
+                    onChange={() => setDemoMode(!demoMode)}
+                  />
+                  <div
+                    className={`block w-11 h-6 rounded-full ${
+                      demoMode ? "bg-[#10a37f]" : "bg-gray-600"
+                    }`}
+                  ></div>
+                  <div
+                    className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform ${
+                      demoMode ? "translate-x-full" : ""
+                    }`}
+                  ></div>
+                </div>
+                <div className="ml-3 text-sm">
+                  {demoMode ? "Demo Mode (No API)" : "API Mode"}
+                </div>
+              </label>
+            </div>
           </div>
         </header>
 
@@ -341,68 +404,98 @@ export default function Home() {
           {!hasGenerated ? (
             // Initial prompt box - only shown before first generation
             <div className="mb-6 bg-[#202123] p-4 rounded-lg shadow-md">
+              {demoMode && (
+                <div className="mb-4 bg-[#10a37f20] border-l-4 border-[#10a37f] p-3 rounded">
+                  <p className="text-sm text-[#ececf1]">
+                    <span className="font-bold">Demo Mode Active:</span> Using
+                    pre-generated examples instead of the API. No API key
+                    required in this mode. Great for testing!
+                  </p>
+                </div>
+              )}
+
               <label className="block text-sm font-medium mb-2 flex items-center">
                 <span className="mr-2">🎨</span> Describe the UI component you
                 want to create:
               </label>
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col gap-2">
                 <textarea
-                  className="flex-1 p-3 border border-[#444654] rounded-md bg-[#2d2d33] text-white focus:outline-none focus:ring-2 focus:ring-[#10a37f]"
+                  className="w-full p-3 border border-[#444654] rounded-md bg-[#2d2d33] text-white focus:outline-none focus:ring-2 focus:ring-[#10a37f]"
                   rows={3}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Examples: A toggle switch with animation, A card component with hover effects, A responsive navigation bar, A custom select dropdown, etc."
                 />
-                <button
-                  className="bg-[#10a37f] text-white px-4 py-2 rounded-md hover:bg-[#0e9170] focus:outline-none focus:ring-2 focus:ring-[#10a37f] transition-colors duration-200 flex items-center justify-center"
-                  onClick={handleGenerate}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span className="inline-block animate-spin mr-2">⚙️</span>
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <span className="mr-2">✨</span> Generate
-                    </>
-                  )}
-                </button>
+
+                {/* Add the ImageUploader component */}
+                <ImageUploader
+                  onImageSelect={setContextImage}
+                  selectedImage={contextImage}
+                />
+
+                <div className="flex justify-end">
+                  <button
+                    className="bg-[#10a37f] text-white px-4 py-2 rounded-md hover:bg-[#0e9170] focus:outline-none focus:ring-2 focus:ring-[#10a37f] transition-colors duration-200 flex items-center justify-center"
+                    onClick={handleGenerate}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="inline-block animate-spin mr-2">
+                          ⚙️
+                        </span>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <span className="mr-2">✨</span> Generate
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
               {error && (
                 <div className="mt-2 text-sm text-red-500">{error}</div>
               )}
             </div>
           ) : (
-            // New generation button - shown after first generation
-            <div className="flex mb-6 gap-3">
-              <button
-                onClick={handleNewGeneration}
-                className="bg-[#2d2d33] hover:bg-[#3d3d43] text-gray-200 px-3 py-2 rounded-md transition-colors duration-200 flex items-center text-sm"
-              >
-                <span className="mr-2">🔄</span> New Component
-              </button>
+            <>
+              {/* Display area for initial prompt */}
+              <div className="flex mb-1.5 text-sm text-gray-400 items-center px-1">
+                <span className="mr-2 text-[#10a37f]">🔍</span>
+                <span className="font-medium mr-2">Initial prompt:</span>
+                <span className="italic truncate">{getInitialPrompt()}</span>
+              </div>
 
-              {/* Component History Dropdown */}
-              <ComponentHistory
-                components={componentHistory}
-                activeId={activeComponentId}
-                onSwitch={handleSwitchComponent}
-                onDelete={handleDeleteComponent}
-              />
+              {/* New generation button - shown after first generation */}
+              <div className="flex mb-6 gap-3">
+                <button
+                  onClick={handleNewGeneration}
+                  className="bg-[#2d2d33] hover:bg-[#3d3d43] text-gray-200 px-3 py-2 rounded-md transition-colors duration-200 flex items-center text-sm"
+                >
+                  <span className="mr-2">🔄</span> New Component
+                </button>
 
-              {/* Iteration History Dropdown */}
-              {iterationHistory.length > 1 && (
-                <PromptHistory
-                  iterations={iterationHistory}
-                  activeId={activeIterationId}
-                  onSwitch={handleSwitchIteration}
-                  onDelete={handleDeleteIteration}
-                  onIterate={handleIterateFromPast}
+                {/* Component History Dropdown */}
+                <ComponentHistory
+                  components={componentHistory}
+                  activeId={activeComponentId}
+                  onSwitch={handleSwitchComponent}
+                  onDelete={handleDeleteComponent}
                 />
-              )}
-            </div>
+
+                {/* Iteration History Dropdown */}
+                {iterationHistory.length > 1 && (
+                  <PromptHistory
+                    iterations={iterationHistory}
+                    activeId={activeIterationId}
+                    onSwitch={handleSwitchIteration}
+                    onDelete={handleDeleteIteration}
+                    onIterate={handleIterateFromPast}
+                  />
+                )}
+              </div>
+            </>
           )}
 
           {generatedCode && (
