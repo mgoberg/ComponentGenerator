@@ -44,7 +44,7 @@ export default async function handler(
     const response = await axios.post(
       "https://api.anthropic.com/v1/messages",
       {
-        model: "claude-3-5-sonnet-20240620", // Switching back to 3.5 which was working
+        model: "claude-3-5-sonnet-20240620", // Using Claude 3.5 Sonnet explicitly
         max_tokens: 4000,
         messages: [
           {
@@ -161,6 +161,45 @@ ${prompt}`,
     generatedCode = generatedCode
       .replace(/import\s+.*?;?\n/g, "")
       .replace(/export\s+default\s+/g, "");
+
+    // Fix common recursive requestAnimationFrame issues
+    generatedCode = generatedCode.replace(
+      /requestAnimationFrame\(function\s+animate\(\)/g,
+      "const animate = function()"
+    );
+    generatedCode = generatedCode.replace(
+      /requestAnimationFrame\(animate\)/g,
+      "requestAnimationFrame(animate)"
+    );
+
+    // Fix specific issues with animation frames
+    if (
+      generatedCode.includes("requestAnimationFrame") &&
+      generatedCode.includes("setRotation")
+    ) {
+      const animFrameFix = `
+        let animationFrameId;
+        
+        const animate = () => {
+          setRotation((prevRotation) => (prevRotation + speed) % 360);
+          animationFrameId = requestAnimationFrame(animate);
+        };
+        
+        animationFrameId = requestAnimationFrame(animate);
+        
+        return () => {
+          if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+          }
+        };
+      `;
+
+      // Try to replace problematic animation frame code with the fixed version
+      generatedCode = generatedCode.replace(
+        /const\s+animationFrame\s*=\s*requestAnimationFrame\(\s*function\s+animate\(\)\s*\{[\s\S]*?return\s*\(\)\s*=>\s*cancelAnimationFrame\(\s*animationFrame\s*\);/,
+        animFrameFix
+      );
+    }
 
     // If the code still contains markdown formatting or is just the word "object"
     if (

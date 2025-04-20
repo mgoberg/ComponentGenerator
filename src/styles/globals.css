@@ -39,6 +39,48 @@
     @apply font-mono text-sm;
   }
 
+  /* Better textarea styling */
+  textarea.code-editor,
+  textarea.font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+    tab-size: 2;
+    white-space: pre;
+  }
+
+  /* Simple editor styles */
+  textarea.code-editor {
+    @apply font-mono text-sm;
+    tab-size: 2;
+    white-space: pre;
+  }
+
+  /* Code editor improvements */
+  .code-editor-seamless textarea,
+  .code-editor-seamless pre {
+    @apply font-mono text-base;
+    line-height: 1.5;
+    tab-size: 2;
+  }
+
+  .code-editor-seamless textarea::selection {
+    @apply bg-[#214283] text-white;
+  }
+
+  /* Remove old editor styles */
+  /* Editor fixes for seamless appearance */
+  /* Ensure textarea text is actually hidden but cursor remains visible */
+  /* Fix cursor color and make selection visible but not doubled */
+
+  /* Ensure both textarea and pre scroll together */
+  .editor-container textarea,
+  .editor-container pre {
+    white-space: pre;
+    word-wrap: normal;
+    overflow-wrap: normal;
+    overflow: auto;
+  }
+
   /* Dark mode scrollbar styles */
   ::-webkit-scrollbar {
     @apply w-2 h-2;
@@ -60,4 +102,126 @@
   .btn-primary {
     @apply bg-[#10a37f] hover:bg-[#0e9170] text-white px-4 py-2 rounded-md transition-colors;
   }
+
+  /* Simple code editor with syntax highlighting */
+  .code-editor-simple {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    tab-size: 2;
+  }
+
+  /* The highlighted code element */
+  .code-highlight {
+    white-space: pre;
+    background-color: #0d0f10;
+    color: #ececf1;
+  }
+
+  /* The editable textarea */
+  .code-input {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    white-space: pre;
+    color: transparent;
+    caret-color: #ececf1;
+  }
+
+  /* Make the selection visible */
+  .code-input::selection {
+    background-color: rgba(59, 130, 246, 0.3);
+    color: transparent;
+  }
+
+  /* Syntax editor specific styles - updated for dark mode black background */
+  .syntax-editor {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+    background-color: #0d0f10; /* ChatGPT-like dark background instead of pitch black */
+  }
+
+  .syntax-editor textarea,
+  .syntax-editor pre,
+  .syntax-editor code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    tab-size: 2;
+    background-color: #0d0f10; /* ChatGPT-like dark background */
+  }
+
+  /* Make sure the selection is visible but still shows the highlighted code */
+  .syntax-editor textarea::selection {
+    background-color: rgba(73, 186, 255, 0.25);
+    color: transparent;
+  }
+
+  /* Ensure both textarea and pre scroll together */
+  .syntax-editor textarea,
+  .syntax-editor pre {
+    white-space: pre;
+    word-wrap: normal;
+    overflow-wrap: normal;
+    overflow-x: auto;
+  }
+}
+
+/* Prism syntax highlighting styles */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  @apply text-gray-500;
+}
+
+.token.punctuation {
+  @apply text-gray-400;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  @apply text-[#e5c07b];
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  @apply text-[#98c379];
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  @apply text-[#56b6c2];
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  @apply text-[#c678dd];
+}
+
+.token.function,
+.token.class-name {
+  @apply text-[#61afef];
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  @apply text-[#d19a66];
 }
