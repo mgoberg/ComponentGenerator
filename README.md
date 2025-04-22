@@ -7,6 +7,9 @@
 
 ## 📸 Screenshots
 v0.1.2
+
+![e81c053841d1f619ae30a31783622450](https://github.com/user-attachments/assets/d744fd97-8a8e-4015-a151-744cafac37c8)
+
 ![6d3648dfd51eb22c0f6e329bef6de68d](https://github.com/user-attachments/assets/724f8990-0152-442d-9048-3433599bf7a5)
 v0.0.5
 
