@@ -8,6 +8,11 @@ import ComponentHistory from "@/components/ComponentHistory";
 import ImageUploader from "@/components/ImageUploader";
 import { extractComponentName } from "@/utils/codeProcessor";
 import { getDemoComponent } from "@/utils/demoComponents";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 // Define the structure for iteration history
 interface Iteration {
@@ -368,34 +373,15 @@ export default function Home() {
             </h1>
 
             {/* Demo Mode Toggle */}
-            <div className="flex items-center">
-              <label
-                htmlFor="demo-mode"
-                className="flex items-center cursor-pointer"
-              >
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    id="demo-mode"
-                    className="sr-only"
-                    checked={demoMode}
-                    onChange={() => setDemoMode(!demoMode)}
-                  />
-                  <div
-                    className={`block w-11 h-6 rounded-full ${
-                      demoMode ? "bg-[#10a37f]" : "bg-gray-600"
-                    }`}
-                  ></div>
-                  <div
-                    className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform ${
-                      demoMode ? "translate-x-full" : ""
-                    }`}
-                  ></div>
-                </div>
-                <div className="ml-3 text-sm">
-                  {demoMode ? "Demo Mode (No API)" : "API Mode"}
-                </div>
-              </label>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="demo-mode"
+                checked={demoMode}
+                onCheckedChange={setDemoMode}
+              />
+              <Label htmlFor="demo-mode" className="text-sm">
+                {demoMode ? "Demo Mode (No API)" : "API Mode"}
+              </Label>
             </div>
           </div>
         </header>
@@ -403,61 +389,64 @@ export default function Home() {
         <main className="container mx-auto p-4 md:p-6 max-w-7xl">
           {!hasGenerated ? (
             // Initial prompt box - only shown before first generation
-            <div className="mb-6 bg-[#202123] p-4 rounded-lg shadow-md">
-              {demoMode && (
-                <div className="mb-4 bg-[#10a37f20] border-l-4 border-[#10a37f] p-3 rounded">
-                  <p className="text-sm text-[#ececf1]">
-                    <span className="font-bold">Demo Mode Active:</span> Using
-                    pre-generated examples instead of the API. No API key
-                    required in this mode. Great for testing!
-                  </p>
+            <Card className="mb-6">
+              <CardHeader>
+                {demoMode && (
+                  <div className="mb-4 bg-[#10a37f20] border-l-4 border-[#10a37f] p-3 rounded">
+                    <p className="text-sm text-[#ececf1]">
+                      <span className="font-bold">Demo Mode Active:</span> Using
+                      pre-generated examples instead of the API. No API key
+                      required in this mode. Great for testing!
+                    </p>
+                  </div>
+                )}
+
+                <Label className="text-sm font-medium mb-2 flex items-center">
+                  <span className="mr-2">🎨</span> Describe the UI component you
+                  want to create:
+                </Label>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col gap-2">
+                  <Textarea
+                    rows={3}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Examples: A toggle switch with animation, A card component with hover effects, A responsive navigation bar, A custom select dropdown, etc."
+                  />
+
+                  {/* Add the ImageUploader component */}
+                  <ImageUploader
+                    onImageSelect={setContextImage}
+                    selectedImage={contextImage}
+                  />
+
+                  <div className="flex justify-end">
+                    <Button
+                      variant="brand"
+                      onClick={handleGenerate}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="inline-block animate-spin mr-2">
+                            ⚙️
+                          </span>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <span className="mr-2">✨</span> Generate
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              )}
-
-              <label className="block text-sm font-medium mb-2 flex items-center">
-                <span className="mr-2">🎨</span> Describe the UI component you
-                want to create:
-              </label>
-              <div className="flex flex-col gap-2">
-                <textarea
-                  className="w-full p-3 border border-[#444654] rounded-md bg-[#2d2d33] text-white focus:outline-none focus:ring-2 focus:ring-[#10a37f]"
-                  rows={3}
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Examples: A toggle switch with animation, A card component with hover effects, A responsive navigation bar, A custom select dropdown, etc."
-                />
-
-                {/* Add the ImageUploader component */}
-                <ImageUploader
-                  onImageSelect={setContextImage}
-                  selectedImage={contextImage}
-                />
-
-                <div className="flex justify-end">
-                  <button
-                    className="bg-[#10a37f] text-white px-4 py-2 rounded-md hover:bg-[#0e9170] focus:outline-none focus:ring-2 focus:ring-[#10a37f] transition-colors duration-200 flex items-center justify-center"
-                    onClick={handleGenerate}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="inline-block animate-spin mr-2">
-                          ⚙️
-                        </span>
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <span className="mr-2">✨</span> Generate
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-              {error && (
-                <div className="mt-2 text-sm text-red-500">{error}</div>
-              )}
-            </div>
+                {error && (
+                  <div className="mt-2 text-sm text-red-500">{error}</div>
+                )}
+              </CardContent>
+            </Card>
           ) : (
             <>
               {/* Display area for initial prompt */}
@@ -469,12 +458,14 @@ export default function Home() {
 
               {/* New generation button - shown after first generation */}
               <div className="flex mb-6 gap-3">
-                <button
+                <Button
                   onClick={handleNewGeneration}
-                  className="bg-[#2d2d33] hover:bg-[#3d3d43] text-gray-200 px-3 py-2 rounded-md transition-colors duration-200 flex items-center text-sm"
+                  variant="outline"
+                  size="sm"
+                  className="bg-[#2d2d33] hover:bg-[#3d3d43] text-gray-200"
                 >
                   <span className="mr-2">🔄</span> New Component
-                </button>
+                </Button>
 
                 {/* Component History Dropdown */}
                 <ComponentHistory
@@ -501,68 +492,84 @@ export default function Home() {
           {generatedCode && (
             <>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div className="bg-[#202123] p-4 rounded-lg shadow-md">
-                  <h2 className="text-xl font-bold mb-3 flex items-center">
-                    <span className="mr-2">📝</span> UI Component Code
-                  </h2>
-                  <CodeEditor
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      <span className="mr-2">📝</span> UI Component Code
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CodeEditor
+                      code={generatedCode}
+                      onChange={setGeneratedCode}
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      <span className="mr-2">👁️</span> Component Preview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ReactPreviewPane code={generatedCode} />
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card className="mb-6">
+                <CardHeader>
+                  <Label className="text-sm font-medium mb-2 flex items-center">
+                    <span className="mr-2">🔧</span> Iteration: Request changes
+                    or improvements
+                  </Label>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Textarea
+                      id="iteration-input"
+                      className="flex-1"
+                      rows={2}
+                      value={iterationPrompt}
+                      onChange={(e) => setIterationPrompt(e.target.value)}
+                      placeholder="Example: Change the color to blue, add a hover effect, make it more accessible, etc."
+                    />
+                    <Button
+                      variant="brand"
+                      onClick={handleIteration}
+                      disabled={loading || !iterationPrompt.trim()}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="inline-block animate-spin mr-2">
+                            ⚙️
+                          </span>
+                          Applying...
+                        </>
+                      ) : (
+                        <>
+                          <span className="mr-2">✅</span> Apply Changes
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    <span className="mr-2">📚</span> How to Implement
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ImplementationGuide
+                    guide={implementationGuide}
                     code={generatedCode}
-                    onChange={setGeneratedCode}
                   />
-                </div>
-
-                <div className="bg-[#202123] p-4 rounded-lg shadow-md">
-                  <h2 className="text-xl font-bold mb-3 flex items-center">
-                    <span className="mr-2">👁️</span> Component Preview
-                  </h2>
-                  <ReactPreviewPane code={generatedCode} />
-                </div>
-              </div>
-
-              <div className="mb-6 bg-[#202123] p-4 rounded-lg shadow-md">
-                <label className="block text-sm font-medium mb-2 flex items-center">
-                  <span className="mr-2">🔧</span> Iteration: Request changes or
-                  improvements
-                </label>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <textarea
-                    id="iteration-input"
-                    className="flex-1 p-3 border border-[#444654] rounded-md bg-[#2d2d33] text-white focus:outline-none focus:ring-2 focus:ring-[#10a37f]"
-                    rows={2}
-                    value={iterationPrompt}
-                    onChange={(e) => setIterationPrompt(e.target.value)}
-                    placeholder="Example: Change the color to blue, add a hover effect, make it more accessible, etc."
-                  />
-                  <button
-                    className="bg-[#10a37f] text-white px-4 py-2 rounded-md hover:bg-[#0e9170] focus:outline-none focus:ring-2 focus:ring-[#10a37f] transition-colors duration-200 flex items-center justify-center"
-                    onClick={handleIteration}
-                    disabled={loading || !iterationPrompt.trim()}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="inline-block animate-spin mr-2">
-                          ⚙️
-                        </span>
-                        Applying...
-                      </>
-                    ) : (
-                      <>
-                        <span className="mr-2">✅</span> Apply Changes
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-[#202123] p-4 rounded-lg shadow-md">
-                <h2 className="text-xl font-bold mb-3 flex items-center">
-                  <span className="mr-2">📚</span> How to Implement
-                </h2>
-                <ImplementationGuide
-                  guide={implementationGuide}
-                  code={generatedCode}
-                />
-              </div>
+                </CardContent>
+              </Card>
             </>
           )}
         </main>

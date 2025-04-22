@@ -50,7 +50,7 @@ export default async function handler(
     const response = await axios.post(
       "https://api.anthropic.com/v1/messages",
       {
-        model: "claude-3-5-sonnet-20240620", // Using Claude 3.5 Sonnet explicitly
+        model: "claude-3-opus-20240229", // Using Claude 3.5 Sonnet explicitly
         max_tokens: 4000,
         messages: [
           {

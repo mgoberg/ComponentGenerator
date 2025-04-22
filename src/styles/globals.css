@@ -3,6 +3,38 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 0 0% 5%;
+    --foreground: 240 10% 94%;
+
+    --card: 220 5% 13%;
+    --card-foreground: 240 10% 94%;
+
+    --popover: 220 5% 13%;
+    --popover-foreground: 240 10% 94%;
+
+    --primary: 162 87% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 19%;
+    --secondary-foreground: 240 10% 94%;
+
+    --muted: 220 5% 13%;
+    --muted-foreground: 240 5% 65%;
+
+    --accent: 220 4% 25%;
+    --accent-foreground: 240 10% 94%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 240 10% 94%;
+
+    --border: 240 4% 30%;
+    --input: 240 4% 30%;
+    --ring: 162 87% 35%;
+
+    --radius: 0.5rem;
+  }
+
   body {
     @apply bg-[#0d0f10] text-gray-100;
     @apply transition-colors duration-200;
@@ -267,6 +299,15 @@
 }
 
 @layer utilities {
+  /* Add animation utilities that were previously supplied by tailwindcss-animate */
+  .animate-accordion-down {
+    animation: accordion-down 0.2s ease-out;
+  }
+
+  .animate-accordion-up {
+    animation: accordion-up 0.2s ease-out;
+  }
+
   /* Z-index utilities for layering UI elements properly */
   .z-dropdown {
     z-index: 50 !important;

@@ -3,7 +3,8 @@ import hljs from "highlight.js/lib/core";
 import javascript from "highlight.js/lib/languages/javascript";
 import typescript from "highlight.js/lib/languages/typescript";
 import xml from "highlight.js/lib/languages/xml";
-import "highlight.js/styles/tokyo-night-dark.css"; // Using Tokyo Night Dark theme
+// Using a different theme to avoid import issues
+import "highlight.js/styles/github-dark.css";
 
 // Register the languages we need
 hljs.registerLanguage("javascript", javascript);

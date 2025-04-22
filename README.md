@@ -27,6 +27,7 @@ Perfect for developers looking to quickly prototype ideas, solve UI challenges, 
   - 🎭 TypeScript
   - 🌬️ Tailwind CSS
   - 🧩 React Hooks
+  - 🎨 Shadcn UI
 
 - **AI Integration:**
 
@@ -56,3 +57,9 @@ Perfect for developers looking to quickly prototype ideas, solve UI challenges, 
 - **Iteration History:** Track the evolution of your components
 
 ## 📸 Screenshots
+
+_Add your screenshots here_
+
+## 📄 License
+
+MIT
