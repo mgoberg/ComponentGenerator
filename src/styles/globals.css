@@ -201,6 +201,20 @@
     overflow-x: auto;
   }
 
+  /* Ensure consistent heights between code editor and preview */
+  .card-content-wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Match heights between code editor and preview */
+  .syntax-editor,
+  .component-preview-container {
+    height: 400px;
+    flex-grow: 1;
+  }
+
   /* Improved implementation guide styling */
   .prose pre {
     background-color: #161b22 !important;
@@ -239,6 +253,18 @@
     margin-top: 1rem;
     margin-bottom: 0.5rem;
     font-size: 1.125rem;
+  }
+
+  /* Enhanced component preview styles */
+  .component-preview {
+    height: 400px;
+    max-height: 50vh;
+  }
+
+  /* Allow vertical scrolling in component previews when needed */
+  .component-preview iframe {
+    overflow-y: auto;
+    display: block;
   }
 }
 
@@ -308,6 +334,15 @@
     animation: accordion-up 0.2s ease-out;
   }
 
+  /* Add new pulse animations for background effects */
+  .animate-pulse-slow {
+    animation: pulse-background 8s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow-alt {
+    animation: pulse-background 12s ease-in-out infinite reverse;
+  }
+
   /* Z-index utilities for layering UI elements properly */
   .z-dropdown {
     z-index: 50 !important;
@@ -323,5 +358,18 @@
 
   .z-tooltip {
     z-index: 30 !important;
+  }
+}
+
+/* Add keyframes for pulsing background elements */
+@keyframes pulse-background {
+  0%,
+  100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.15;
+    transform: scale(1.05);
   }
 }

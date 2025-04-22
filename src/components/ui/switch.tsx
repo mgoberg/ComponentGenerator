@@ -3,44 +3,46 @@ import { cn } from "@/lib/utils";
 
 interface SwitchProps extends React.InputHTMLAttributes<HTMLInputElement> {
   onCheckedChange?: (checked: boolean) => void;
+  checked?: boolean;
 }
 
 const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
-  ({ className, checked, onCheckedChange, ...props }, ref) => {
+  ({ className, checked, onCheckedChange, onChange, ...props }, ref) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      // Handle both callback patterns
       if (onCheckedChange) {
         onCheckedChange(e.target.checked);
+      }
+      if (onChange) {
+        onChange(e);
       }
     };
 
     return (
-      <div
-        className={cn(
-          "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10a37f]",
-          checked ? "bg-[#10a37f]" : "bg-gray-600",
-          className
-        )}
-        data-state={checked ? "checked" : "unchecked"}
-      >
-        <input
-          type="checkbox"
-          className="sr-only"
-          checked={checked}
-          onChange={handleChange}
-          ref={ref}
-          {...props}
-        />
+      <div className="inline-flex items-center">
         <div
           className={cn(
-            "pointer-events-none absolute flex h-full w-full items-center justify-center"
+            "relative h-6 w-11 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#383e3c]/30",
+            checked ? "bg-[#1a2e29]/90" : "bg-gray-700/70",
+            className
           )}
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute top-1/2 -mt-2 h-4 w-4 rounded-full bg-white shadow-lg transition-transform duration-200",
-            checked ? "translate-x-5" : "translate-x-1"
-          )}
-        />
+          onClick={() => onCheckedChange && onCheckedChange(!checked)}
+        >
+          <input
+            type="checkbox"
+            className="sr-only"
+            checked={checked}
+            onChange={handleChange}
+            ref={ref}
+            {...props}
+          />
+          <span
+            className={cn(
+              "absolute left-0 inline-block h-4 w-4 translate-y-[-50%] rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out top-1/2",
+              checked ? "translate-x-5" : "translate-x-1"
+            )}
+          />
+        </div>
       </div>
     );
   }

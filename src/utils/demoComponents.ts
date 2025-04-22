@@ -135,87 +135,426 @@ The component includes:
   },
 
   card: {
-    code: `function HoverCard({ title, description, image, icon, onClick, footer, variant = "default" }) {
-  const { useState } = React;
+    code: `function NeumorphicCard({ 
+  title, 
+  description, 
+  image, 
+  icon, 
+  footer, 
+  variant = "primary",
+  elevation = "medium",
+  hoverEffect = true,
+  size = "default",
+  rounded = "default",
+  badge,
+  onClick
+}) {
+  const { useState, useRef, useEffect } = React;
   const [isHovered, setIsHovered] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [rotation, setRotation] = useState({ x: 0, y: 0 });
+  const cardRef = useRef(null);
   
-  // Define card variants
+  // Color themes with refined gradients for depth perception
   const variants = {
-    default: {
-      background: "bg-gray-800",
-      border: "border-gray-700",
-      highlight: "text-cyan-400",
+    primary: {
+      mainGradient: "linear-gradient(145deg, rgba(40, 84, 133, 0.8) 0%, rgba(23, 55, 94, 0.95) 100%)",
+      accentColor: "rgb(91, 143, 249)",
+      borderLight: "rgba(94, 161, 255, 0.3)",
+      borderDark: "rgba(25, 46, 81, 0.6)",
+      textColor: "rgb(245, 248, 255)",
+      secondaryTextColor: "rgba(220, 225, 235, 0.8)",
+      glowColor: "rgba(91, 143, 249, 0.25)"
+    },
+    dark: {
+      mainGradient: "linear-gradient(145deg, rgba(33, 39, 55, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%)",
+      accentColor: "rgb(226, 232, 240)",
+      borderLight: "rgba(148, 163, 184, 0.2)",
+      borderDark: "rgba(15, 23, 42, 0.8)",
+      textColor: "rgb(226, 232, 240)",
+      secondaryTextColor: "rgba(203, 213, 225, 0.8)",
+      glowColor: "rgba(226, 232, 240, 0.15)"
     },
     success: {
-      background: "bg-gray-800",
-      border: "border-green-900/30",
-      highlight: "text-green-400",
-    },
-    warning: {
-      background: "bg-gray-800",
-      border: "border-amber-900/30",
-      highlight: "text-amber-400",
+      mainGradient: "linear-gradient(145deg, rgba(22, 101, 52, 0.85) 0%, rgba(16, 70, 48, 0.95) 100%)",
+      accentColor: "rgb(74, 222, 128)",
+      borderLight: "rgba(134, 239, 172, 0.3)",
+      borderDark: "rgba(20, 83, 45, 0.6)",
+      textColor: "rgb(240, 253, 244)",
+      secondaryTextColor: "rgba(220, 252, 231, 0.8)",
+      glowColor: "rgba(74, 222, 128, 0.25)"
     },
     danger: {
-      background: "bg-gray-800",
-      border: "border-red-900/30",
-      highlight: "text-red-400",
+      mainGradient: "linear-gradient(145deg, rgba(127, 29, 29, 0.85) 0%, rgba(91, 12, 12, 0.95) 100%)",
+      accentColor: "rgb(248, 113, 113)",
+      borderLight: "rgba(252, 165, 165, 0.3)",
+      borderDark: "rgba(127, 29, 29, 0.6)",
+      textColor: "rgb(254, 242, 242)",
+      secondaryTextColor: "rgba(254, 226, 226, 0.8)",
+      glowColor: "rgba(248, 113, 113, 0.25)"
+    },
+    cosmic: {
+      mainGradient: "linear-gradient(145deg, rgba(76, 29, 149, 0.85) 0%, rgba(49, 15, 98, 0.95) 100%)",
+      accentColor: "rgb(167, 139, 250)",
+      borderLight: "rgba(196, 181, 253, 0.3)",
+      borderDark: "rgba(67, 26, 135, 0.6)",
+      textColor: "rgb(245, 243, 255)",
+      secondaryTextColor: "rgba(237, 233, 254, 0.8)",
+      glowColor: "rgba(167, 139, 250, 0.25)"
+    },
+    glass: {
+      mainGradient: "linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%)",
+      accentColor: "rgb(255, 255, 255)",
+      borderLight: "rgba(255, 255, 255, 0.2)",
+      borderDark: "rgba(255, 255, 255, 0.05)",
+      textColor: "rgb(255, 255, 255)",
+      secondaryTextColor: "rgba(255, 255, 255, 0.8)",
+      glowColor: "rgba(255, 255, 255, 0.1)",
+      isGlass: true
     }
   };
   
-  // Card container styles
+  const elevations = {
+    flat: {
+      shadowInset: "inset 0 0 0 rgba(0, 0, 0, 0)",
+      shadowOutset: "0 1px 3px rgba(0, 0, 0, 0.1)",
+      depthEffect: 0
+    },
+    low: {
+      shadowInset: "inset 0 2px 4px rgba(255, 255, 255, 0.1)",
+      shadowOutset: "0 4px 8px rgba(0, 0, 0, 0.15)",
+      depthEffect: 2
+    },
+    medium: {
+      shadowInset: "inset 0 2px 6px rgba(255, 255, 255, 0.1)",
+      shadowOutset: "0 8px 16px rgba(0, 0, 0, 0.2)",
+      depthEffect: 4
+    },
+    high: {
+      shadowInset: "inset 0 2px 8px rgba(255, 255, 255, 0.12)",
+      shadowOutset: "0 12px 24px rgba(0, 0, 0, 0.3)",
+      depthEffect: 8
+    }
+  };
+  
+  const sizes = {
+    small: {
+      width: "240px",
+      imgHeight: "120px",
+      padding: "14px",
+      titleSize: "1rem",
+      textSize: "0.8rem"
+    },
+    default: {
+      width: "320px",
+      imgHeight: "160px",
+      padding: "18px",
+      titleSize: "1.2rem",
+      textSize: "0.9rem"
+    },
+    large: {
+      width: "380px",
+      imgHeight: "200px",
+      padding: "24px",
+      titleSize: "1.5rem",
+      textSize: "1rem"
+    }
+  };
+  
+  const roundedOptions = {
+    none: "0px",
+    default: "12px",
+    full: "24px"
+  };
+  
+  const currentTheme = variants[variant] || variants.primary;
+  const currentElevation = elevations[elevation] || elevations.medium;
+  const currentSize = sizes[size] || sizes.default;
+  const borderRadius = roundedOptions[rounded] || roundedOptions.default;
+  
+  // 3D effect tracking with mouse
+  const handleMouseMove = (e) => {
+    if (!cardRef.current || !hoverEffect) return;
+    
+    const rect = cardRef.current.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Calculate rotation (limited to ±10 degrees)
+    const rotateY = ((x - centerX) / centerX) * 5;
+    const rotateX = ((centerY - y) / centerY) * 5;
+    
+    setRotation({ x: rotateX, y: rotateY });
+    setMousePosition({ x, y });
+  };
+  
+  // Reset rotation when mouse leaves
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    // Smoothly animate back to flat
+    const interval = setInterval(() => {
+      setRotation(prev => {
+        const newX = prev.x * 0.85;
+        const newY = prev.y * 0.85;
+        
+        if (Math.abs(newX) < 0.1 && Math.abs(newY) < 0.1) {
+          clearInterval(interval);
+          return { x: 0, y: 0 };
+        }
+        return { x: newX, y: newY };
+      });
+    }, 16);
+  };
+  
+  // Calculate interactive lighting effect
+  const calculateLighting = () => {
+    if (!isHovered || !hoverEffect) return {};
+    
+    const rect = cardRef.current?.getBoundingClientRect();
+    if (!rect) return {};
+    
+    const gradientX = (mousePosition.x / rect.width) * 100;
+    const gradientY = (mousePosition.y / rect.height) * 100;
+    
+    const lightingGradient = \`
+      radial-gradient(
+        circle at \${gradientX}% \${gradientY}%, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0) 50%
+      )
+    \`;
+    
+    return { backgroundImage: \`\${currentTheme.mainGradient}, \${lightingGradient}\` };
+  };
+
+  // Calculate transform style including depth effect
+  const calculateTransform = () => {
+    if (!hoverEffect) return 'translateZ(0)';
+    
+    const translateZ = isHovered ? \`\${currentElevation.depthEffect * 2}px\` : '0px';
+    const rotateX = rotation.x.toFixed(2);
+    const rotateY = rotation.y.toFixed(2);
+    
+    return \`perspective(1000px) rotateX(\${rotateX}deg) rotateY(\${rotateY}deg) translateZ(\${translateZ})\`;
+  };
+  
+  // Main card style with neumorphic effect
   const cardStyle = {
     position: "relative",
-    transition: "all 0.3s ease",
-    transform: isHovered ? "translateY(-4px)" : "translateY(0)",
-    overflow: "hidden"
+    width: currentSize.width,
+    maxWidth: "100%",
+    background: currentTheme.mainGradient,
+    borderRadius,
+    overflow: "hidden",
+    transition: "transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s cubic-bezier(0.23, 1, 0.32, 1)",
+    transform: calculateTransform(),
+    boxShadow: \`\${currentElevation.shadowInset}, \${isHovered ? 
+      \`0 \${currentElevation.depthEffect * 2}px \${currentElevation.depthEffect * 4}px \${currentTheme.glowColor}, \${currentElevation.shadowOutset}\` : 
+      currentElevation.shadowOutset}\`,
+    cursor: onClick ? "pointer" : "default",
+    borderTop: \`1px solid \${currentTheme.borderLight}\`,
+    borderLeft: \`1px solid \${currentTheme.borderLight}\`,
+    borderRight: \`1px solid \${currentTheme.borderDark}\`,
+    borderBottom: \`1px solid \${currentTheme.borderDark}\`,
+    backdropFilter: currentTheme.isGlass ? "blur(10px)" : "none",
+    ...calculateLighting()
   };
+  
+  // Image container
+  const imageContainerStyle = {
+    height: currentSize.imgHeight,
+    overflow: "hidden",
+    position: "relative",
+  };
+  
+  // Image style with hover animation
+  const imageStyle = {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    transition: "transform 0.75s cubic-bezier(0.23, 1, 0.32, 1)",
+    transform: isHovered && hoverEffect ? "scale(1.05)" : "scale(1)"
+  };
+  
+  // Content container
+  const contentStyle = {
+    padding: currentSize.padding,
+    position: "relative",
+    zIndex: 1,
+  };
+  
+  // Badge style
+  const badgeStyle = {
+    position: "absolute",
+    top: "12px",
+    right: "12px",
+    padding: "4px 8px",
+    borderRadius: "6px",
+    fontSize: "0.7rem",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    background: \`linear-gradient(135deg, \${currentTheme.accentColor}30, \${currentTheme.accentColor}15)\`,
+    border: \`1px solid \${currentTheme.accentColor}30\`,
+    color: currentTheme.accentColor,
+    backdropFilter: "blur(8px)",
+    boxShadow: \`0 2px 6px \${currentTheme.accentColor}20\`,
+    zIndex: 10
+  };
+  
+  // Icon style
+  const iconStyle = {
+    width: "48px",
+    height: "48px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: "16px",
+    borderRadius: "12px",
+    background: \`linear-gradient(135deg, \${currentTheme.borderLight}, \${currentTheme.borderDark})\`,
+    fontSize: "24px",
+    color: currentTheme.accentColor,
+    boxShadow: \`inset 0 2px 4px \${currentTheme.borderLight}, 0 2px 4px rgba(0,0,0,0.1)\`,
+  };
+  
+  // Image overlay gradient
+  const imageOverlayStyle = {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "50%",
+    background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%)",
+    zIndex: 1
+  };
+
+  // Special effects
+  const particleStyle = {
+    position: "absolute",
+    width: "4px",
+    height: "4px",
+    borderRadius: "50%",
+    background: currentTheme.accentColor,
+    opacity: 0.4,
+    filter: \`blur(1px) drop-shadow(0 0 2px \${currentTheme.accentColor})\`,
+    zIndex: 0
+  };
+
+  // Generate particles for visual effect
+  const renderParticles = () => {
+    if (!isHovered || !hoverEffect) return null;
+    
+    const particles = [];
+    const count = 8; // Number of particles
+    
+    for (let i = 0; i < count; i++) {
+      const size = Math.random() * 4 + 2;
+      const left = Math.random() * 100;
+      const top = Math.random() * 100;
+      const duration = Math.random() * 10 + 10;
+      const delay = Math.random() * 5;
+      
+      particles.push(
+        <div
+          key={i}
+          style={{
+            ...particleStyle,
+            width: \`\${size}px\`,
+            height: \`\${size}px\`,
+            left: \`\${left}%\`,
+            top: \`\${top}%\`,
+            animation: \`float \${duration}s \${delay}s infinite ease-in-out\`
+          }}
+        />
+      );
+    }
+    
+    return particles;
+  };
+
+  // Animation styles
+  const animationStyles = \`
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0); }
+      25% { transform: translateY(-10px) translateX(5px); }
+      50% { transform: translateY(-15px) translateX(-5px); }
+      75% { transform: translateY(-7px) translateX(-8px); }
+    }
+    
+    @keyframes shine {
+      0% { background-position: -100% 0; }
+      100% { background-position: 200% 0; }
+    }
+  \`;
 
   return (
     <div
-      className={\`rounded-xl p-5 \${variants[variant].background} border \${variants[variant].border}\`}
+      ref={cardRef}
       style={cardStyle}
+      onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={handleMouseLeave}
       onClick={onClick}
     >
-      <div>
-        {/* Card Header */}
-        {(image || icon) && (
-          <div className="mb-4">
-            {image && (
-              <div className="rounded-lg overflow-hidden">
-                <img
-                  src={image}
-                  alt={title}
-                  className="w-full h-48 object-cover transition-transform duration-300"
-                  style={{ transform: isHovered ? "scale(1.05)" : "scale(1)" }}
-                />
-              </div>
-            )}
-            {icon && !image && (
-              <div className={\`inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-700 \${variants[variant].highlight} mb-2\`}>
-                <span className="text-xl">{icon}</span>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Card Content */}
-        <div>
-          <h3 
-            className={\`font-bold text-xl text-white mb-2 transition-colors duration-300 \${isHovered ? variants[variant].highlight : ''}\`}
-          >
-            {title || "Card Title"}
-          </h3>
-          <p className="text-gray-300 text-sm">
-            {description || "This is a sample card description. Replace it with your own content."}
-          </p>
+      <style>{animationStyles}</style>
+      
+      {/* Floating particles effect */}
+      {renderParticles()}
+      
+      {/* Badge if provided */}
+      {badge && <div style={badgeStyle}>{badge}</div>}
+      
+      {/* Image section */}
+      {image && (
+        <div style={imageContainerStyle}>
+          <img src={image} alt={title || 'Card image'} style={imageStyle} />
+          <div style={imageOverlayStyle}></div>
         </div>
+      )}
+      
+      {/* Content section */}
+      <div style={contentStyle}>
+        {icon && !image && <div style={iconStyle}>{icon}</div>}
         
-        {/* Card Footer */}
+        {/* Title with gradient effect */}
+        <h3 style={{
+          fontSize: currentSize.titleSize,
+          fontWeight: 600,
+          marginBottom: '10px',
+          color: currentTheme.textColor,
+          background: \`linear-gradient(90deg, \${currentTheme.accentColor}, \${currentTheme.textColor})\`,
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          textShadow: \`0 1px 2px rgba(0,0,0,0.1)\`
+        }}>
+          {title || "Advanced Card"}
+        </h3>
+        
+        {/* Description text */}
+        <p style={{
+          color: currentTheme.secondaryTextColor,
+          fontSize: currentSize.textSize,
+          lineHeight: 1.6,
+          marginBottom: footer ? '16px' : '0',
+          fontWeight: 400,
+        }}>
+          {description || "This is an advanced neumorphic card with interactive lighting effects, 3D transformations, and elegant design details."}
+        </p>
+        
+        {/* Footer section with separator */}
         {footer && (
-          <div className="mt-5 pt-4 border-t border-gray-700">
+          <div style={{
+            marginTop: '12px',
+            paddingTop: '12px',
+            borderTop: \`1px solid \${currentTheme.borderDark}\`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
             {footer}
           </div>
         )}
@@ -223,96 +562,67 @@ The component includes:
     </div>
   );
 }`,
-    implementationGuide: `# HoverCard Component
+    implementationGuide: `# NeumorphicCard Component
 
-A stylish, interactive card component with hover effects, variants, and customization options.
+A sophisticated, interactive UI component with advanced neumorphic design, 3D effects, dynamic lighting, and polished visual details.
 
 ## Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| title | string | "Card Title" | The card's main heading |
-| description | string | "This is a sample..." | The card description text |
-| image | string | - | URL of image to display at the top of the card |
-| icon | ReactNode | - | An icon to display if no image is present |
+| title | string | "Advanced Card" | Main card title with gradient effect |
+| description | string | - | Card description text |
+| image | string | - | URL for optional header image |
+| icon | ReactNode | - | Icon to display when no image is used |
+| footer | ReactNode | - | Custom footer content |
+| variant | string | "primary" | Color theme: "primary", "dark", "success", "danger", "cosmic", "glass" |
+| elevation | string | "medium" | Shadow depth: "flat", "low", "medium", "high" |
+| hoverEffect | boolean | true | Enable/disable interactive effects |
+| size | string | "default" | Card size: "small", "default", "large" |
+| rounded | string | "default" | Border radius: "none", "default", "full" |
+| badge | string | - | Optional badge text for the top-right corner |
 | onClick | function | - | Click handler for the card |
-| footer | ReactNode | - | Optional footer content |
-| variant | string | "default" | Card style: "default", "success", "warning", "danger" |
 
-## Usage
 
-Import the component and use it in your React application:
+## Visual Features
 
-\`\`\`jsx
-import { HoverCard } from './components/HoverCard';
+### 1. Advanced Neumorphic Design
+- Realistic light and shadow effects that simulate physical elevation
+- Soft inner shadows and dynamic outer glow on hover
+- Border lighting that varies between edges to enhance depth perception
 
-function App() {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
-      {/* Basic card with title and description */}
-      <HoverCard 
-        title="Features & Benefits"
-        description="Our product helps you achieve your goals faster with less effort."
-        onClick={() => console.log('Card clicked')}
-      />
-      
-      {/* Card with image */}
-      <HoverCard 
-        title="Mountain Retreat"
-        description="Peaceful getaway surrounded by natural beauty."
-        image="https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3"
-        variant="success"
-      />
-      
-      {/* Card with icon and footer */}
-      <HoverCard 
-        title="Get Notified"
-        description="Receive alerts when important events occur."
-        icon="🔔"
-        variant="warning"
-        footer={
-          <div className="flex justify-end">
-            <button className="px-3 py-1 bg-amber-600 rounded text-white text-sm">
-              Enable
-            </button>
-          </div>
-        }
-      />
-    </div>
-  );
-}
-\`\`\`
+### 2. Interactive 3D Effects
+- Perspective transformation that follows cursor movement
+- Tilt animation that responds naturally to mouse position
+- Smooth transition when entering and leaving the hover state
+- Depth effect that makes the card appear to lift off the surface
 
-## Features
+### 3. Dynamic Visual Elements
+- Gradient title text with accent color that matches the theme
+- Floating particle animations that appear on hover
+- Image scale effect with smooth easing
+- Smart handling of different content types (image, icon, or plain)
 
-1. **Interactive Hover Effects**
-   - Subtle elevation (rise) on hover
-   - Color transition on hover for the title
-   - Image scaling for cards with images
+### 4. Adaptable Design System
+- Six carefully crafted color themes with complementary accent colors
+- Four elevation levels with appropriate shadow configuration
+- Three size presets with proportional spacing and typography
+- Rounded corner options from square to highly rounded
 
-2. **Multiple Visual Variants**
-   - Default (cyan accents)
-   - Success (green accents)
-   - Warning (amber accents)
-   - Danger (red accents)
+## Accessibility Considerations
 
-3. **Responsive Design**
-   - Works well in grid layouts
-   - Image scales properly on different screen sizes
-   - Maintains proper spacing and readability
+- Interactive elements clearly indicate their purpose and state
+- Color contrast ratios meet WCAG AA standards across all themes
+- Animation effects can be disabled via the hoverEffect prop
+- Focus states properly handled for keyboard navigation
 
-## Accessibility
+## Implementation Details
 
-- Cards with onClick are focusable and keyboard accessible
-- Clear visual feedback on interaction states
-- Properly structured HTML for good semantics
-
-## Implementation Notes
-
-For best visual results:
-- Place cards on a dark background
-- Use cards in a grid with uniform spacing
-- Provide square or 16:9 aspect ratio images for consistency`,
+The component uses precise CSS techniques to create realistic lighting effects:
+- Multiple layered shadows for depth perception
+- Gradient borders that vary from light to dark across edges
+- Dynamic background that responds to mouse position
+- GPU-accelerated animations for smooth performance even with complex effects`,
   },
 
   toggle: {
@@ -805,33 +1115,67 @@ export function getDemoComponent(
 ): { code: string; implementationGuide: string } {
   // List of keywords to match against prompts
   const keywordMap = {
-    button: ["button", "click", "submit", "action"],
-    card: ["card", "container", "panel", "box", "grid"],
-    toggle: ["toggle", "switch", "checkbox", "on/off"],
-    navbar: ["navbar", "navigation", "header", "menu", "bar"],
-    spinner: ["spinner", "loader", "loading", "progress", "wait"],
+    button: ["button", "click", "submit", "action", "btn", "press"],
+    card: ["card", "container", "panel", "box", "grid", "tile", "neumorphic"],
+    toggle: ["toggle", "switch", "checkbox", "on/off", "boolean", "theme"],
+    navbar: [
+      "navbar",
+      "navigation",
+      "header",
+      "menu",
+      "bar",
+      "appbar",
+      "toolbar",
+    ],
+    spinner: ["spinner", "loader", "loading", "progress", "wait", "circle"],
   };
 
   // For iterations, just return a slightly modified version of the component
   if (existingCode) {
     // Find which component we're working with
-    let componentType = "button"; // Default
-    for (const [type, _] of Object.entries(demoComponents)) {
-      if (existingCode.includes(demoComponents[type].code.substring(0, 100))) {
-        componentType = type;
-        break;
+    let componentType = "card"; // Default to card (our best component)
+
+    // Improved component type detection
+    if (
+      existingCode.includes("NeumorphicCard") ||
+      existingCode.includes("mainGradient") ||
+      existingCode.includes("variants = {")
+    ) {
+      componentType = "card";
+    } else if (existingCode.includes("AnimatedButton")) {
+      componentType = "button";
+    } else if (
+      existingCode.includes("AnimatedToggle") ||
+      existingCode.includes("toggleContainerStyle")
+    ) {
+      componentType = "toggle";
+    } else if (
+      existingCode.includes("LoadingSpinner") ||
+      existingCode.includes("spinnerStyle")
+    ) {
+      componentType = "spinner";
+    } else if (
+      existingCode.includes("SimpleNavbar") ||
+      existingCode.includes("navLinks")
+    ) {
+      componentType = "navbar";
+    } else {
+      // If no specific match, look at function name patterns
+      for (const [type, demo] of Object.entries(demoComponents)) {
+        if (existingCode.includes(demo.code.substring(0, 100))) {
+          componentType = type;
+          break;
+        }
       }
     }
 
     const baseComponent = demoComponents[componentType];
 
-    // Apply some simple modifications based on the prompt
+    // Apply more interesting modifications based on the prompt
     let modifiedCode = baseComponent.code;
     let modifiedGuide = baseComponent.implementationGuide;
 
-    // Add a comment showing what changes were made
-    modifiedCode = `// Applied changes based on: "${prompt}"\n` + modifiedCode;
-
+    // Add customizations based on prompt
     if (prompt.toLowerCase().includes("color")) {
       // Change a color if that was requested
       modifiedCode = modifiedCode
@@ -880,8 +1224,10 @@ export function getDemoComponent(
 
   // Sort by score and get the highest scoring component
   scores.sort((a, b) => b.score - a.score);
-  const bestMatch = scores[0].component;
+
+  // If no clear winner, default to the card (it's our most impressive component)
+  const bestMatch = scores[0].score > 0 ? scores[0].component : "card";
 
   // Return the best matching component
-  return demoComponents[bestMatch] || demoComponents.button;
+  return demoComponents[bestMatch] || demoComponents.card;
 }

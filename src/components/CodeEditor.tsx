@@ -89,7 +89,7 @@ export default function CodeEditor({ code, onChange }: CodeEditorProps) {
   }, [code]);
 
   return (
-    <div className="syntax-editor relative h-80 rounded-md border border-[#444654] overflow-hidden bg-[#0d0f10]">
+    <div className="syntax-editor relative h-[400px] rounded-md border border-[#444654] overflow-hidden bg-[#0d0f10]">
       {/* Copy button */}
       <div className="absolute top-0 right-0 z-20 m-2">
         <button

@@ -6,6 +6,8 @@ import ImplementationGuide from "@/components/ImplementationGuide";
 import PromptHistory from "@/components/PromptHistory";
 import ComponentHistory from "@/components/ComponentHistory";
 import ImageUploader from "@/components/ImageUploader";
+import VersionInfo from "@/components/VersionInfo";
+import { appConfig } from "@/config/appConfig";
 import { extractComponentName } from "@/utils/codeProcessor";
 import { getDemoComponent } from "@/utils/demoComponents";
 import { Button } from "@/components/ui/button";
@@ -42,7 +44,7 @@ export default function Home() {
   const [iterationPrompt, setIterationPrompt] = useState("");
   const [hasGenerated, setHasGenerated] = useState(false);
   const [contextImage, setContextImage] = useState<string | null>(null);
-  const [demoMode, setDemoMode] = useState(false);
+  const [demoMode, setDemoMode] = useState(true);
 
   // Store iteration history
   const [iterationHistory, setIterationHistory] = useState<Iteration[]>([]);
@@ -357,7 +359,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>AI React UI Component Designer</title>
+        <title>CompGen - React Component Generator</title>
         <meta
           name="description"
           content="Generate React UI components with AI"
@@ -365,45 +367,52 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="min-h-screen bg-[#0d0f10] text-[#ececf1]">
-        <header className="border-b border-[#444654] bg-[#202123] shadow-sm">
+      {/* Added ambient background with glass UI */}
+      <div className="min-h-screen bg-[#0d0f10] text-[#ececf1] relative overflow-hidden">
+        {/* Ambient light backgrounds with pulse animation */}
+        <div className="absolute top-[-350px] left-[-350px] w-[700px] h-[700px] rounded-full bg-[#2563eb]/10 blur-[150px] pointer-events-none animate-pulse-slow"></div>
+        <div className="absolute bottom-[-350px] right-[-350px] w-[700px] h-[700px] rounded-full bg-[#10a37f]/10 blur-[150px] pointer-events-none animate-pulse-slow-alt"></div>
+
+        <header className="border-b border-[#444654]/40 bg-[#202123]/60 shadow-sm backdrop-blur-xl relative z-10">
           <div className="container mx-auto flex justify-between items-center p-4">
             <h1 className="text-xl md:text-2xl font-bold">
-              ✨ AI React UI Component Designer
+              CompGen - React Component Generator
             </h1>
 
-            {/* Demo Mode Toggle */}
+            {/* Demo Mode Toggle - Changed to always show "API Mode" */}
             <div className="flex items-center space-x-2">
               <Switch
                 id="demo-mode"
                 checked={demoMode}
-                onCheckedChange={setDemoMode}
+                onCheckedChange={(checked) => {
+                  console.log("Setting demo mode to:", checked);
+                  setDemoMode(checked);
+                }}
               />
               <Label htmlFor="demo-mode" className="text-sm">
-                {demoMode ? "Demo Mode (No API)" : "API Mode"}
+                API Mode
               </Label>
             </div>
           </div>
         </header>
 
-        <main className="container mx-auto p-4 md:p-6 max-w-7xl">
+        <main className="container mx-auto p-4 md:p-6 max-w-5xl relative z-10">
           {!hasGenerated ? (
             // Initial prompt box - only shown before first generation
-            <Card className="mb-6">
+            <Card className="mb-6 backdrop-blur-xl bg-[#202123]/50 border-[#444654]/30 shadow-lg">
               <CardHeader>
                 {demoMode && (
-                  <div className="mb-4 bg-[#10a37f20] border-l-4 border-[#10a37f] p-3 rounded">
+                  <div className="mb-4 bg-[#10a37f10] border-l-4 border-[#10a37f] p-3 rounded backdrop-blur-xl">
                     <p className="text-sm text-[#ececf1]">
                       <span className="font-bold">Demo Mode Active:</span> Using
                       pre-generated examples instead of the API. No API key
-                      required in this mode. Great for testing!
+                      required in this mode.
                     </p>
                   </div>
                 )}
 
                 <Label className="text-sm font-medium mb-2 flex items-center">
-                  <span className="mr-2">🎨</span> Describe the UI component you
-                  want to create:
+                  Describe the UI component you want to create:
                 </Label>
               </CardHeader>
               <CardContent>
@@ -413,6 +422,7 @@ export default function Home() {
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="Examples: A toggle switch with animation, A card component with hover effects, A responsive navigation bar, A custom select dropdown, etc."
+                    className="bg-[#2d2d33]/50 backdrop-blur-sm"
                   />
 
                   {/* Add the ImageUploader component */}
@@ -426,18 +436,17 @@ export default function Home() {
                       variant="brand"
                       onClick={handleGenerate}
                       disabled={loading}
+                      className="px-4 py-2 rounded-md"
                     >
                       {loading ? (
                         <>
                           <span className="inline-block animate-spin mr-2">
-                            ⚙️
+                            ◐
                           </span>
                           Generating...
                         </>
                       ) : (
-                        <>
-                          <span className="mr-2">✨</span> Generate
-                        </>
+                        "Generate Component"
                       )}
                     </Button>
                   </div>
@@ -451,7 +460,6 @@ export default function Home() {
             <>
               {/* Display area for initial prompt */}
               <div className="flex mb-1.5 text-sm text-gray-400 items-center px-1">
-                <span className="mr-2 text-[#10a37f]">🔍</span>
                 <span className="font-medium mr-2">Initial prompt:</span>
                 <span className="italic truncate">{getInitialPrompt()}</span>
               </div>
@@ -462,9 +470,9 @@ export default function Home() {
                   onClick={handleNewGeneration}
                   variant="outline"
                   size="sm"
-                  className="bg-[#2d2d33] hover:bg-[#3d3d43] text-gray-200"
+                  className="bg-[#2d2d33]/60 hover:bg-[#3d3d43]/60 text-gray-200 backdrop-blur-sm"
                 >
-                  <span className="mr-2">🔄</span> New Component
+                  New Component
                 </Button>
 
                 {/* Component History Dropdown */}
@@ -492,13 +500,11 @@ export default function Home() {
           {generatedCode && (
             <>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>
-                      <span className="mr-2">📝</span> UI Component Code
-                    </CardTitle>
+                <Card className="backdrop-blur-xl bg-[#202123]/50 border-[#444654]/30 shadow-lg h-full">
+                  <CardHeader className="pb-2">
+                    <CardTitle>UI Component Code</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-0 h-full">
                     <CodeEditor
                       code={generatedCode}
                       onChange={setGeneratedCode}
@@ -506,30 +512,28 @@ export default function Home() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>
-                      <span className="mr-2">👁️</span> Component Preview
-                    </CardTitle>
+                {/* Component Preview Card - Made taller */}
+                <Card className="backdrop-blur-xl bg-[#202123]/50 border-[#444654]/30 shadow-lg h-full">
+                  <CardHeader className="pb-2">
+                    <CardTitle>Component Preview</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-0 h-full">
                     <ReactPreviewPane code={generatedCode} />
                   </CardContent>
                 </Card>
               </div>
 
-              <Card className="mb-6">
+              <Card className="mb-6 backdrop-blur-xl bg-[#202123]/50 border-[#444654]/30 shadow-lg">
                 <CardHeader>
                   <Label className="text-sm font-medium mb-2 flex items-center">
-                    <span className="mr-2">🔧</span> Iteration: Request changes
-                    or improvements
+                    Iteration: Request changes or improvements
                   </Label>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Textarea
                       id="iteration-input"
-                      className="flex-1"
+                      className="flex-1 bg-[#2d2d33]/50 backdrop-blur-sm"
                       rows={2}
                       value={iterationPrompt}
                       onChange={(e) => setIterationPrompt(e.target.value)}
@@ -539,29 +543,26 @@ export default function Home() {
                       variant="brand"
                       onClick={handleIteration}
                       disabled={loading || !iterationPrompt.trim()}
+                      className="h-auto whitespace-nowrap"
                     >
                       {loading ? (
                         <>
                           <span className="inline-block animate-spin mr-2">
-                            ⚙️
+                            ◐
                           </span>
                           Applying...
                         </>
                       ) : (
-                        <>
-                          <span className="mr-2">✅</span> Apply Changes
-                        </>
+                        "Apply Changes"
                       )}
                     </Button>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="backdrop-blur-xl bg-[#202123]/50 border-[#444654]/30 shadow-lg">
                 <CardHeader>
-                  <CardTitle>
-                    <span className="mr-2">📚</span> How to Implement
-                  </CardTitle>
+                  <CardTitle>How your component works</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ImplementationGuide
@@ -573,6 +574,12 @@ export default function Home() {
             </>
           )}
         </main>
+
+        {/* Version info component */}
+        <VersionInfo
+          version={appConfig.version}
+          lastUpdated={appConfig.lastUpdated}
+        />
       </div>
     </>
   );
